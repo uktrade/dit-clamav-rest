@@ -1,6 +1,6 @@
 <?php
 
-$url = "http://app1:letmein@localhost/scan";
+$url = "http://localhost/scan";
 
 $username = "app1";
 $password = "letmein";
@@ -11,8 +11,6 @@ $filedata = fread($file, filesize($filename));
 
 $file = new CURLFile($filename);
 $file->setPostFilename($filename);
-
-$curl = curl_init();
 
 $headers = array("Content-Type:multipart/form-data");
 $postfields = array("filedata" => $file, "filename" => $filename);
