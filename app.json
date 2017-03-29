@@ -1,0 +1,16 @@
+{
+  "name": "Minimal ClamAV REST interface",
+  "description": "",
+  "repository": "https://github.com/uktrade/dit-clamav-rest",
+  "buildpacks": [
+    {
+      "url": "https://github.com/heroku/heroku-buildpack-apt"
+    },
+    {
+      "url": "https://github.com/tempoautomation/heroku-buildpack-clamav"
+    },
+    {
+      "url": "https://github.com/heroku/heroku-buildpack-python"
+    }
+  ]
+}
