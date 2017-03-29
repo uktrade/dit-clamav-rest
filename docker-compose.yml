@@ -1,0 +1,19 @@
+version: '2'
+
+services:
+  nginx:
+    image: nginx:stable-alpine
+    volumes:
+      - ./docker/default-nginx-site.conf:/etc/nginx/conf.d/default.conf
+    ports:
+      - 80:80
+    links:
+      - clamav_rest:clamav_rest
+  clamav_rest:
+    build: .
+    links:
+      - clamd:clamd
+    environment:
+      - APP_CONFIG=config.TestConfig
+  clamd:
+    image: mkodockx/docker-clamav:latest

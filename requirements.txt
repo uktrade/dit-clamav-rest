@@ -1,0 +1,11 @@
+clamd==1.0.2
+Flask==0.12
+raven==6.0.0
+Flask-PyMongo==0.4.1
+passlib==1.7.1
+Flask-HTTPAuth==3.2.2
+gunicorn==19.7.1
+blinker==1.4
+
+# required for tests
+mock==2.0.0

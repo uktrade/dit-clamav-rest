@@ -1,0 +1,1 @@
+web: gunicorn clamav_rest:app
