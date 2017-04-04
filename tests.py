@@ -26,8 +26,8 @@ class ClamAVRESTTestCase(unittest.TestCase):
 
     def test_healthcheck(self):
         response = self.app.get("/")
-        self.assertEquals(response.status_code, 200)
-        self.assertEquals(response.data, b'Service OK')
+        self.assertEqual(response.status_code, 200)
+        self.assertEqual(response.data, b'Service OK')
 
     @mock.patch("clamav_rest.cd.ping")
     def test_healthcheck_no_service(self, ping):
@@ -35,13 +35,13 @@ class ClamAVRESTTestCase(unittest.TestCase):
 
         response = self.app.get("/")
 
-        self.assertEquals(response.status_code, 200)
-        self.assertEquals(response.data, b'Service Unavailable')
+        self.assertEqual(response.status_code, 200)
+        self.assertEqual(response.data, b'Service Unavailable')
 
     def test_scan_endpoint_requires_post(self):
         response = self.app.get("/scan")
 
-        self.assertEquals(response.status_code, 405)
+        self.assertEqual(response.status_code, 405)
 
     def test_auth_ok(self):
         response = self.app.post("/scan",
@@ -49,14 +49,14 @@ class ClamAVRESTTestCase(unittest.TestCase):
                                  )
 
         # expecting 400 as no file data
-        self.assertEquals(response.status_code, 400)
+        self.assertEqual(response.status_code, 400)
 
     def test_auth_fail(self):
         response = self.app.post("/scan",
                                  headers=self._get_auth_header("app1", "WRONGPASSWORD")
                                  )
 
-        self.assertEquals(response.status_code, 401)
+        self.assertEqual(response.status_code, 401)
 
     def test_eicar(self):
         response = self.app.post("/scan",
@@ -65,8 +65,8 @@ class ClamAVRESTTestCase(unittest.TestCase):
                                  data=self._get_file_data("unsafe.txt", self.EICAR)
                                  )
 
-        self.assertEquals(response.data, b"NOTOK")
-        self.assertEquals(response.status_code, 200)
+        self.assertEqual(response.data, b"NOTOK")
+        self.assertEqual(response.status_code, 200)
 
     def test_clean_data(self):
         response = self.app.post("/scan",
@@ -74,8 +74,8 @@ class ClamAVRESTTestCase(unittest.TestCase):
                                  content_type='multipart/form-data',
                                  data=self._get_file_data("test.txt", b"NO VIRUS HERE")
                                  )
-        self.assertEquals(response.data, b"OK")
-        self.assertEquals(response.status_code, 200)
+        self.assertEqual(response.data, b"OK")
+        self.assertEqual(response.status_code, 200)
 
 
 if __name__ == '__main__':
