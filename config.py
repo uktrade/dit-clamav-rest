@@ -15,7 +15,7 @@ class BaseConfig(object):
 
 
 class ProductionConfig(BaseConfig):
-    pass
+    CLAMD_HOST = "clamav_rest"
 
 
 class TestConfig(BaseConfig):
