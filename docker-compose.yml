@@ -16,4 +16,4 @@ services:
     environment:
       - APP_CONFIG=config.TestConfig
   clamd:
-    image: mkodockx/docker-clamav:latest
+    image: ukti/docker-clamav:latest
