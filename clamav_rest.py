@@ -18,7 +18,11 @@ logger = logging.getLogger("CLAMAV-REST")
 app = Flask("CLAMAV-REST")
 app.config.from_object(os.environ['APP_CONFIG'])
 
-APPLICATION_USERS = dict([user.split("::") for user in app.config["APPLICATION_USERS"].split("\n") if user])
+try:
+    APPLICATION_USERS = dict([user.split("::") for user in app.config["APPLICATION_USERS"].split("\n") if user]) # noqa
+except AttributeError:
+    APPLICATION_USERS = {}
+    logger.warning("No application users configured.")
 
 sentry = Sentry(app, dsn=app.config.get("SENTRY_DSN", None))
 
