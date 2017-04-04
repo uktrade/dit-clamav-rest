@@ -15,7 +15,7 @@ class BaseConfig(object):
 
 
 class ProductionConfig(BaseConfig):
-    CLAMD_HOST = "clamav_rest"
+    CLAMD_HOST = os.environ.get("CLAMD_HOST", "clamav")
 
 
 class TestConfig(BaseConfig):
