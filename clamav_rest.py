@@ -3,7 +3,7 @@ import logging
 import sys
 import timeit
 
-from flask import Flask, request, g
+from flask import Flask, request, g, jsonify
 from flask_httpauth import HTTPBasicAuth
 
 import clamd
@@ -88,6 +88,42 @@ def scan():
     ))
 
     return status
+
+
+@app.route("/v2/scan", methods=["POST"])
+@auth.login_required
+def scan_v2():
+
+    if len(request.files) != 1:
+        return "Provide a single file", 400
+
+    _, file_data = list(request.files.items())[0]
+
+    logger.info("Starting scan for {app_user} of {file_name}".format(
+        app_user=g.current_user,
+        file_name=file_data.filename
+    ))
+
+    start_time = timeit.default_timer()
+    resp = cd.instream(file_data)
+    elapsed = timeit.default_timer() - start_time
+
+    status, reason = resp["stream"]
+
+    response = {
+        'malware': False if status == "OK" else True,
+        'reason': reason,
+        'time': elapsed
+    }
+
+    logger.info("Scan v2 for {app_user} of {file_name} complete. Took: {elapsed}. Malware found?: {status}".format(
+        app_user=g.current_user,
+        file_name=file_data.filename,
+        elapsed=elapsed,
+        status=response['malware']
+    ))
+
+    return jsonify(response)
 
 
 if __name__ == "__main__":
