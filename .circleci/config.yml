@@ -16,9 +16,20 @@ jobs:
             pip install -r requirements.txt
 
       - run:
+          name: Wait for clamav container
+          command: |
+            for i in 'seq 1 10'
+            do
+              nc -z localhost 3310 && echo "clamav container is up" && exit 0
+              echo -n .
+              sleep 1
+            done
+            echo Failed waiting for clamav container && exit 1
+
+      - run:
           name: Wait for clamav to be ready
           command: |
-            for i in `seq 1 30`;
+            for i in `seq 1 20`;
             do
                 result=$(echo "PING" | nc localhost 3310)
                 
