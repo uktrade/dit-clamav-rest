@@ -3,7 +3,7 @@ jobs:
   build:
     docker:
       - image: circleci/python:3.6.8
-      - image: ukti/docker-clamav:latest
+      - image: quay.io/uktrade/docker-clamav
 
     steps:  
       - checkout
