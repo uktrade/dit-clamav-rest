@@ -7,10 +7,21 @@ jobs:
 
     steps:  
       - checkout
-    
+
       - run:
           name: Create virtualenv and install dependencies
           command: |
             python3 -m venv venv
             . venv/bin/activate
             pip install -r requirements.txt
+
+      - run:
+          name: Wait for clamav to be ready
+          command: |
+            for i in `seq 1 10`;
+            do
+              nc -z localhost 3310 && echo Success && exit 0
+              echo -n .
+              sleep 1
+            done
+            echo Failed waiting for clamav && exit 1
