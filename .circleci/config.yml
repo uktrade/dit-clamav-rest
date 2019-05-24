@@ -20,7 +20,7 @@ jobs:
           command: |
             for i in `seq 1 20`;
             do
-              nc -z localhost 3310 && echo Success && exit 0
+              nc -z 127.0.0.1 3310 && echo Success && exit 0
               echo -n .
               sleep 1
             done
@@ -31,7 +31,7 @@ jobs:
           command: |
             for i in `seq 1 20`;
             do
-                result=$(echo "PING" | nc localhost 3310)
+                result=$(echo "PING" | nc 127.0.0.1 3310)
                 
                 if [ "$result" == "PONG" ]; then
                     echo $result
