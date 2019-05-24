@@ -17,14 +17,7 @@ jobs:
 
       - run:
           name: Wait for clamav container
-          command: |
-            for i in `seq 1 20`;
-            do
-              nc -z localhost 3310 && echo Success && exit 0
-              echo -n .
-              sleep 1
-            done
-            echo Failed waiting for clamav container && exit 1
+          command: sleep 20 && nc -vz localhost 3310
 
       - run:
           name: Wait for clamav to be ready
