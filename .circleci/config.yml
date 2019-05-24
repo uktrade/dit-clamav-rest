@@ -8,6 +8,12 @@ jobs:
     steps:  
       - checkout
 
+      - restore_cache:
+          keys:
+            - pip-dependencies-{{ checksum "requirements.txt" }}
+            # fallback to using the latest cache if no exact match is found
+            - pip-dependencies-
+
       - run:
           name: Create virtualenv and install dependencies
           command: |
@@ -43,6 +49,12 @@ jobs:
                 sleep 1
             done
             echo Failed waiting for clamav && exit 1
+
+
+      - save_cache:
+          paths:
+            - venv
+          key: v1-dependencies-{{ checksum "requirements.txt" }}
 
       - run:
           name: Run unit tests
