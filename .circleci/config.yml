@@ -5,8 +5,6 @@ jobs:
       - image: circleci/python:3.6.8
       - image: ukti/docker-clamav:latest
 
-    working_directory: ~/
-    
     steps:  
       - checkout
 
