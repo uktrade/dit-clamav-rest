@@ -18,9 +18,9 @@ jobs:
       - run:
           name: Wait for clamav container
           command: |
-            for i in `seq 1 10`;
+            for i in `seq 1 20`;
             do
-              nc -z localhost 3310 && echo "clamav container is up" && exit 0
+              nc -z localhost 3310 && echo Success && exit 0
               echo -n .
               sleep 1
             done
@@ -34,7 +34,7 @@ jobs:
                 result=$(echo "PING" | nc localhost 3310)
                 
                 if [ "$result" == "PONG" ]; then
-                    echo "Found"
+                    echo $result
                     exit 0
                 fi
                 
