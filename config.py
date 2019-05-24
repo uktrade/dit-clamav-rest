@@ -17,10 +17,14 @@ class BaseConfig(object):
 class ProductionConfig(BaseConfig):
     CLAMD_HOST = os.environ.get("CLAMD_HOST", "clamav")
 
+
 class CircleCiConfig(BaseConfig):
     CLAMD_HOST = "localhost"
     DEBUG = True
     TESTING = True
+    # pwd: letmein
+    APPLICATION_USERS = "app1::$pbkdf2-sha256$29000$LiWkFELo3TvHGANACAGAkA$Re51NLQNiCYy0UAdnFbNfLltFDmiJOOzqjMPFRVBgMM"
+
 
 class TestConfig(BaseConfig):
     DEBUG = True
