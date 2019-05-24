@@ -1,11 +1,11 @@
-version: 2
+version: 2.1
 jobs:
   build:
     docker:
       - image: circleci/python:3.6.8
       - image: ukti/docker-clamav:latest
 
-      steps:
+    steps:  
       - checkout
 
       - run:
@@ -17,7 +17,7 @@ jobs:
 
       - run:
           name: Wait for clamav container
-          command: sleep 30 && nc -vz localhost 3310
+          command: sleep 20 && nc -vz localhost 3310
 
       - run:
           name: Wait for clamav to be ready
