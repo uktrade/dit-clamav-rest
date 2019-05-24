@@ -37,6 +37,6 @@ jobs:
             echo Failed waiting for clamav && exit 1
 
       - run:
-        name: Run unit tests
-        command: |
-          APP_CONFIG=config.TestConfig python -m unittest tests.py -f
+          name: Run unit tests
+          command: |
+            APP_CONFIG=config.TestConfig python -m unittest tests.py -f
