@@ -17,7 +17,15 @@ jobs:
 
       - run:
           name: Wait for clamav container
-          command: sleep 20 && nc -vz localhost 3310
+          command: |
+            for i in `seq 1 30`;
+            do
+              nc -vz localhost 3310 && echo Success && exit 0
+              echo -n .
+              sleep 1
+            done
+            echo clamav container never arrived && exit 1
+          
 
       - run:
           name: Wait for clamav to be ready
