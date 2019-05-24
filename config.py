@@ -17,6 +17,10 @@ class BaseConfig(object):
 class ProductionConfig(BaseConfig):
     CLAMD_HOST = os.environ.get("CLAMD_HOST", "clamav")
 
+class CircleCiConfig(BaseConfig):
+    CLAMD_HOST = "localhost"
+    DEBUG = True
+    TESTING = True
 
 class TestConfig(BaseConfig):
     DEBUG = True

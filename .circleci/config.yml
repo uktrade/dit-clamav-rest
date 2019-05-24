@@ -40,4 +40,4 @@ jobs:
           name: Run unit tests
           command: |
             source venv/bin/activate
-            APP_CONFIG=config.TestConfig python -m unittest tests.py -f
+            APP_CONFIG=config.CircleCiConfig python -m unittest tests.py -f
