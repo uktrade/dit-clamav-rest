@@ -18,10 +18,16 @@ jobs:
       - run:
           name: Wait for clamav to be ready
           command: |
-            for i in `seq 1 10`;
+            for i in `seq 1 30`;
             do
-              nc -z localhost 3310 && echo Success && exit 0
-              echo -n .
-              sleep 1
+                result=$(echo "PING" | nc localhost 3310)
+                
+                if [ "$result" == "PONG" ]; then
+                    echo "Found"
+                    exit 0
+                fi
+                
+                echo -n .
+                sleep 1
             done
             echo Failed waiting for clamav && exit 1
