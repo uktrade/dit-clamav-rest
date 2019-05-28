@@ -4,8 +4,6 @@ import unittest
 import mock
 import json
 
-# dnspython==1.16.0
-
 import clamd
 import clamav_rest
 
