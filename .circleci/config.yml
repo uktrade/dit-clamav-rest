@@ -1,0 +1,63 @@
+version: 2.1
+jobs:
+  build:
+    docker:
+      - image: circleci/python:3.6.8
+      - image: ukti/docker-clamav:latest
+
+    steps:  
+      - checkout
+
+      - restore_cache:
+          keys:
+            - pip-dependencies-{{ checksum "requirements.txt" }}
+            # fallback to using the latest cache if no exact match is found
+            - pip-dependencies-
+
+      - run:
+          name: Create virtualenv and install dependencies
+          command: |
+            python3 -m venv venv
+            . venv/bin/activate
+            pip install -r requirements.txt
+
+      - run:
+          name: Wait for clamav container
+          command: |
+            for i in `seq 1 30`;
+            do
+              nc -z localhost 3310 && echo Success && exit 0
+              echo -n .
+              sleep 1
+            done
+            echo clamav container never arrived && exit 1
+          
+
+      - run:
+          name: Wait for clamav to be ready
+          command: |
+            for i in `seq 1 20`;
+            do
+                result=$(echo "PING" | nc 127.0.0.1 3310)
+                
+                if [ "$result" == "PONG" ]; then
+                    echo $result
+                    exit 0
+                fi
+                
+                echo -n .
+                sleep 1
+            done
+            echo Failed waiting for clamav && exit 1
+
+
+      - save_cache:
+          paths:
+            - venv
+          key: pip-dependencies-{{ checksum "requirements.txt" }}
+
+      - run:
+          name: Run unit tests
+          command: |
+            source venv/bin/activate
+            APP_CONFIG=config.CircleCiConfig python -m unittest tests.py -f

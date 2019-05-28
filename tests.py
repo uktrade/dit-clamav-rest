@@ -23,6 +23,16 @@ def _get_file_data(file_name, data):
         file=(BytesIO(data), file_name))
 
 
+def _read_file_data(file_name):
+    with open(file_name, "rb") as binary_file:
+        # Read the whole file at once
+        data = binary_file.read()
+
+    return dict(
+        file=(BytesIO(data), file_name)
+    )
+
+
 class ClamAVRESTTestCase(unittest.TestCase):
 
     def setUp(self):
@@ -58,7 +68,8 @@ class ClamAVRESTTestCase(unittest.TestCase):
 
     def test_auth_fail(self):
         response = self.app.post("/scan",
-                                 headers=_get_auth_header("app1", "WRONGPASSWORD")
+                                 headers=_get_auth_header(
+                                     "app1", "WRONGPASSWORD")
                                  )
 
         self.assertEqual(response.status_code, 401)
@@ -77,7 +88,8 @@ class ClamAVRESTTestCase(unittest.TestCase):
         response = self.app.post("/scan",
                                  headers=_get_auth_header("app1", "letmein"),
                                  content_type='multipart/form-data',
-                                 data=_get_file_data("test.txt", b"NO VIRUS HERE")
+                                 data=_get_file_data(
+                                     "test.txt", b"NO VIRUS HERE")
                                  )
         self.assertEqual(response.data, b"OK")
         self.assertEqual(response.status_code, 200)
@@ -88,11 +100,25 @@ class ClamAVRESTV2ScanTestCase(unittest.TestCase):
         clamav_rest.app.config['TESTING'] = True
         self.app = clamav_rest.app.test_client()
 
+    def test_encrypyed_archive(self):
+        response = self.app.post("/v2/scan",
+                                 headers=_get_auth_header("app1", "letmein"),
+                                 content_type='multipart/form-data',
+                                 data=_read_file_data(
+                                     "client-examples/protected.zip")
+                                 )
+
+        data = json.loads(response.data.decode('utf8'))
+
+        self.assertEqual(data['malware'], True)
+        self.assertEqual(data['reason'], "Heuristics.Encrypted.Zip")
+
     def test_eicar(self):
         response = self.app.post("/v2/scan",
                                  headers=_get_auth_header("app1", "letmein"),
                                  content_type='multipart/form-data',
-                                 data=_get_file_data("unsafe.txt",  EICAR)
+                                 data=_get_file_data(
+                                     "eicar.txt",  EICAR)
                                  )
 
         data = json.loads(response.data.decode('utf8'))
