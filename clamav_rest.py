@@ -20,7 +20,7 @@ app.config.from_object(os.environ['APP_CONFIG'])
 
 
 try:
-    APPLICATION_USERS = dict([user.split("::") for user in app.config["APPLICATION_USERS"].encode('utf-8').decode('unicode_escape').split("\n") if user]) # noqa
+    APPLICATION_USERS = dict([user.split("::") for user in app.config["APPLICATION_USERS"].encode('utf-8').decode('unicode_escape').split("\n") if user])  # noqa
 except AttributeError:
     APPLICATION_USERS = {}
     logger.warning("No application users configured.")
@@ -55,10 +55,19 @@ def verify_pw(username, password):
 def healthcheck():
 
     try:
-        cd.ping()
-        return "Service OK"
+        clamd_response = cd.ping()
+        if clamd_response == "PONG":
+            return "Service OK"
+
+        logger.error("expected PONG from clamd container")
+        return "Service Down", 502
+
     except clamd.ConnectionError:
-        return "Service Unavailable"
+        logger.error("clamd.ConnectionError")
+        return "Service Unavailable", 502
+    except Exception as ex:
+        logger.error(ex)
+        return "Service Unavailable", 500
 
 
 @app.route("/scan", methods=["POST"])
