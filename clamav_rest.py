@@ -6,10 +6,11 @@ import timeit
 from flask import Flask, request, g, jsonify
 from flask_httpauth import HTTPBasicAuth
 
+from clamav_versions import ClamAVRemoteVersionService,ClamAVLocalVersionService
+
 import clamd
 from passlib.hash import pbkdf2_sha256 as hash
 from raven.contrib.flask import Sentry
-
 
 logging.basicConfig(stream=sys.stdout, level=logging.DEBUG)
 
@@ -18,9 +19,10 @@ logger = logging.getLogger("CLAMAV-REST")
 app = Flask("CLAMAV-REST")
 app.config.from_object(os.environ['APP_CONFIG'])
 
-
 try:
-    APPLICATION_USERS = dict([user.split("::") for user in app.config["APPLICATION_USERS"].encode('utf-8').decode('unicode_escape').split("\n") if user])  # noqa
+    APPLICATION_USERS = dict([user.split("::") for user in
+                              app.config["APPLICATION_USERS"].encode('utf-8').decode('unicode_escape').split("\n") if
+                              user])  # noqa
 except AttributeError:
     APPLICATION_USERS = {}
     logger.warning("No application users configured.")
@@ -38,7 +40,6 @@ else:
 
 @auth.verify_password
 def verify_pw(username, password):
-
     app_password = APPLICATION_USERS.get(username, None)
 
     if not app_password:
@@ -53,7 +54,6 @@ def verify_pw(username, password):
 
 @app.route("/", methods=["GET"])
 def healthcheck():
-
     try:
         clamd_response = cd.ping()
         if clamd_response == "PONG":
@@ -70,10 +70,24 @@ def healthcheck():
         return "Service Unavailable", 500
 
 
+@app.route("/health/definitions", methods=["GET"])
+def health_definitions():
+
+    remote_service = ClamAVRemoteVersionService(app.config["CLAMAV_TXT_URI"])
+    remote_version = ClamAVRemoteVersionService.parse_remote_version( remote_service.get_remote_version_text())
+
+    local_service = ClamAVLocalVersionService(cd)
+    local_version = ClamAVLocalVersionService.parse_local_version( local_service.get_local_version_text())
+
+    if remote_version == local_version:
+        return remote_version
+
+    return "Outdated", 502
+
+
 @app.route("/scan", methods=["POST"])
 @auth.login_required
 def scan():
-
     if len(request.files) != 1:
         return "Provide a single file", 400
 
@@ -103,7 +117,6 @@ def scan():
 @app.route("/v2/scan", methods=["POST"])
 @auth.login_required
 def scan_v2():
-
     if len(request.files) != 1:
         return "Provide a single file", 400
 

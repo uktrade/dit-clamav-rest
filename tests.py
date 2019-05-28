@@ -4,9 +4,13 @@ import unittest
 import mock
 import json
 
+# dnspython==1.16.0
+
 import clamd
 import clamav_rest
 
+from dns.name import Name
+from dns.rdtypes.IN.SRV import SRV
 
 EICAR = b"X5O!P%@AP[4\PZX54(P^)7CC)7}$EICAR-STANDARD-ANTIVIRUS-TEST-FILE!$H+H*"
 
@@ -31,6 +35,32 @@ def _read_file_data(file_name):
     return dict(
         file=(BytesIO(data), file_name)
     )
+
+
+class ClamAVirusUpdate(unittest.TestCase):
+
+    def setUp(self):
+        clamav_rest.app.config['Testing'] = True
+        self.app = clamav_rest.app.test_client()
+
+    @mock.patch("clamav_versions.ClamAVRemoteVersionService.parse_remote_version")
+    @mock.patch("clamav_versions.ClamAVLocalVersionService.parse_local_version")
+    def test_local_remote_services_are_insync(self, remote, local):
+        remote.return_value = "3"
+        local.return_value = "3"
+
+        response = self.app.get("/health/definitions")
+        self.assertEqual(response.status_code, 200)
+        self.assertEqual(response.data, b'3')
+
+    @mock.patch("clamav_versions.ClamAVRemoteVersionService.parse_remote_version")
+    @mock.patch("clamav_versions.ClamAVLocalVersionService.parse_local_version")
+    def test_services_out_of_date(self, remote, local):
+        remote.return_value = "3"
+        local.return_value = "2"
+
+        response = self.app.get("/health/definitions")
+        self.assertEqual(response.status_code, 502)
 
 
 class ClamAVRESTTestCase(unittest.TestCase):
@@ -58,10 +88,9 @@ class ClamAVRESTTestCase(unittest.TestCase):
         ping.side_effect = Exception("Oops")
 
         response = self.app.get("/")
-        
+
         self.assertEqual(response.status_code, 500)
         self.assertEqual(response.data, b'Service Unavailable')
-
 
     def test_scan_endpoint_requires_post(self):
         response = self.app.get("/scan")
@@ -88,7 +117,7 @@ class ClamAVRESTTestCase(unittest.TestCase):
         response = self.app.post("/scan",
                                  headers=_get_auth_header("app1", "letmein"),
                                  content_type='multipart/form-data',
-                                 data=_get_file_data("unsafe.txt",  EICAR)
+                                 data=_get_file_data("unsafe.txt", EICAR)
                                  )
 
         self.assertEqual(response.data, b"NOTOK")
@@ -128,7 +157,7 @@ class ClamAVRESTV2ScanTestCase(unittest.TestCase):
                                  headers=_get_auth_header("app1", "letmein"),
                                  content_type='multipart/form-data',
                                  data=_get_file_data(
-                                     "eicar.txt",  EICAR)
+                                     "eicar.txt", EICAR)
                                  )
 
         data = json.loads(response.data.decode('utf8'))
