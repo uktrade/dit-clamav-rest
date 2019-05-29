@@ -6,7 +6,7 @@ import timeit
 from flask import Flask, request, g, jsonify
 from flask_httpauth import HTTPBasicAuth
 
-from clamav_versions import ClamAVRemoteVersionService,ClamAVLocalVersionService
+from clamav_versions import ClamAVRemoteVersionService, ClamAVLocalVersionService
 
 import clamd
 from passlib.hash import pbkdf2_sha256 as hash
@@ -74,13 +74,17 @@ def healthcheck():
 def health_definitions():
 
     try:
-        remote_service = ClamAVRemoteVersionService(app.config["CLAMAV_TXT_URI"])
-        remote_version = ClamAVRemoteVersionService.parse_remote_version( remote_service.get_remote_version_text())
+        remote_service = ClamAVRemoteVersionService(
+            app.config["CLAMAV_TXT_URI"])
+        remote_version = ClamAVRemoteVersionService.parse_remote_version(
+            remote_service.get_remote_version_text())
 
         local_service = ClamAVLocalVersionService(cd)
-        local_version = ClamAVLocalVersionService.parse_local_version( local_service.get_local_version_text())
+        local_version = ClamAVLocalVersionService.parse_local_version(
+            local_service.get_local_version_text())
 
-        version_msg = "local_version: %s remote_version: %s" % (local_version, remote_version)
+        version_msg = "local_version: %s remote_version: %s" % (
+            local_version, remote_version)
         logger.info(version_msg)
 
         if remote_version == local_version:
