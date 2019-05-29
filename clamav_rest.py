@@ -20,9 +20,13 @@ app = Flask("CLAMAV-REST")
 app.config.from_object(os.environ['APP_CONFIG'])
 
 try:
+<<<<<<< HEAD
     APPLICATION_USERS = dict([user.split("::") for user in
                               app.config["APPLICATION_USERS"].encode('utf-8').decode('unicode_escape').split("\n") if
                               user])  # noqa
+=======
+    APPLICATION_USERS = dict([user.split("::") for user in app.config["APPLICATION_USERS"].encode('utf-8').decode('unicode_escape').split("\n") if user])  # noqa
+>>>>>>> master
 except AttributeError:
     APPLICATION_USERS = {}
     logger.warning("No application users configured.")
@@ -72,7 +76,6 @@ def healthcheck():
 
 @app.route("/health/definitions", methods=["GET"])
 def health_definitions():
-
     try:
         remote_service = ClamAVRemoteVersionService(
             app.config["CLAMAV_TXT_URI"])
