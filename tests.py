@@ -1,14 +1,12 @@
 import base64
-from io import BytesIO
-import unittest
-import mock
 import json
+import unittest
+from io import BytesIO
 
 import clamd
-import clamav_rest
+import mock
 
-from dns.name import Name
-from dns.rdtypes.IN.SRV import SRV
+import clamav_rest
 
 EICAR = b"X5O!P%@AP[4\PZX54(P^)7CC)7}$EICAR-STANDARD-ANTIVIRUS-TEST-FILE!$H+H*"
 
