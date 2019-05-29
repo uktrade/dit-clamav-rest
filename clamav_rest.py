@@ -63,10 +63,10 @@ def healthcheck():
         return "Service Down", 502
 
     except clamd.ConnectionError:
-        logger.error("clamd.ConnectionError")
+        logger.exception("clamd.ConnectionError")
         return "Service Unavailable", 502
     except Exception as ex:
-        logger.error(ex)
+        logger.exception(ex)
         return "Service Unavailable", 500
 
 
