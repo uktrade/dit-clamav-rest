@@ -73,16 +73,23 @@ def healthcheck():
 @app.route("/health/definitions", methods=["GET"])
 def health_definitions():
 
-    remote_service = ClamAVRemoteVersionService(app.config["CLAMAV_TXT_URI"])
-    remote_version = ClamAVRemoteVersionService.parse_remote_version( remote_service.get_remote_version_text())
+    try:
+        remote_service = ClamAVRemoteVersionService(app.config["CLAMAV_TXT_URI"])
+        remote_version = ClamAVRemoteVersionService.parse_remote_version( remote_service.get_remote_version_text())
 
-    local_service = ClamAVLocalVersionService(cd)
-    local_version = ClamAVLocalVersionService.parse_local_version( local_service.get_local_version_text())
+        local_service = ClamAVLocalVersionService(cd)
+        local_version = ClamAVLocalVersionService.parse_local_version( local_service.get_local_version_text())
 
-    if remote_version == local_version:
-        return remote_version
+        version_msg = "local_version: %s remote_version: %s" % (local_version, remote_version)
+        logger.info(version_msg)
 
-    return "Outdated", 502
+        if remote_version == local_version:
+            return remote_version
+
+        return "Outdated %s" % version_msg, 500
+    except Exception as ex:
+        logger.error(ex)
+        return "Service Unavailable", 500
 
 
 @app.route("/scan", methods=["POST"])

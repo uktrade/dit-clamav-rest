@@ -58,7 +58,7 @@ class ClamAVirusUpdate(unittest.TestCase):
         local.return_value = "2"
 
         response = self.app.get("/health/definitions")
-        self.assertEqual(response.status_code, 502)
+        self.assertEqual(response.status_code, 500)
 
 
 class ClamAVRESTTestCase(unittest.TestCase):
