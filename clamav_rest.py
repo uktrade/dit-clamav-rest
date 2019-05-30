@@ -34,8 +34,12 @@ auth = HTTPBasicAuth()
 if "CLAMD_SOCKET" in app.config:
     cd = clamd.ClamdUnixSocket(path=app.config["CLAMD_SOCKET"])
 else:
-    cd = clamd.ClamdNetworkSocket(
-        host=app.config["CLAMD_HOST"], port=app.config["CLAMD_PORT"])
+    try:
+        cd = clamd.ClamdNetworkSocket(
+            host=app.config["CLAMD_HOST"], port=app.config["CLAMD_PORT"])
+    except Exception as ex:
+        logger.error("error bootstrapping clamd for network socket")
+        logger.exception(ex)
 
 
 @auth.verify_password
@@ -73,14 +77,21 @@ def healthcheck():
 @app.route("/health/definitions", methods=["GET"])
 def health_definitions():
     try:
+        # no point in checking remote if local is down
+        local_service = ClamAVLocalVersionService(cd)
+        local_version_text = local_service.get_local_version_text()
+
+        if not local_version_text:
+            raise Exception("local_version_text is empty - is clamav running")
+
+        local_version = ClamAVLocalVersionService.parse_local_version(
+            local_version_text
+        )
+       
         remote_service = ClamAVRemoteVersionService(
             app.config["CLAMAV_TXT_URI"])
         remote_version = ClamAVRemoteVersionService.parse_remote_version(
             remote_service.get_remote_version_text())
-
-        local_service = ClamAVLocalVersionService(cd)
-        local_version = ClamAVLocalVersionService.parse_local_version(
-            local_service.get_local_version_text())
 
         version_msg = "local_version: %s remote_version: %s" % (
             local_version, remote_version)
@@ -92,7 +103,7 @@ def health_definitions():
         return "Outdated %s" % version_msg, 500
     except Exception as ex:
         logger.error(ex)
-        return "Service Unavailable", 500
+        return "Service Unavailable", 502
 
 
 @app.route("/scan", methods=["POST"])
