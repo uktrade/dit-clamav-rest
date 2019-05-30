@@ -10,9 +10,9 @@ jobs:
 
       - restore_cache:
           keys:
-            - pip-dependencies-{{ checksum "requirements.txt" }}
+            - pip-dependencies-v2-{{ checksum "requirements.txt" }}
             # fallback to using the latest cache if no exact match is found
-            - pip-dependencies-
+            # - pip-dependencies-
 
       - run:
           name: Create virtualenv and install dependencies
@@ -54,7 +54,7 @@ jobs:
       - save_cache:
           paths:
             - venv
-          key: pip-dependencies-{{ checksum "requirements.txt" }}
+          key: pip-dependencies-v2-{{ checksum "requirements.txt" }}
 
       - run:
           name: Run unit tests
