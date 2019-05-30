@@ -102,7 +102,7 @@ def health_definitions():
 
         return "Outdated %s" % version_msg, 500
     except Exception as ex:
-        logger.error(ex)
+        logger.exception('unexpected error')
         return "Service Unavailable", 502
 
 
