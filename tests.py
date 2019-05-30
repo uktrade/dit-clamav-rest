@@ -45,7 +45,8 @@ class ClamAVirusUpdate(unittest.TestCase):
         remote.return_value = "3"
         local.return_value = "3"
 
-        response = self.app.get("/health/definitions")
+        response = self.app.get("/health/definitions",
+                                headers=_get_auth_header("app1", "letmein"))
         self.assertEqual(response.status_code, 200)
         self.assertEqual(response.data, b'3')
 
@@ -55,8 +56,14 @@ class ClamAVirusUpdate(unittest.TestCase):
         remote.return_value = "3"
         local.return_value = "2"
 
-        response = self.app.get("/health/definitions")
+        response = self.app.get("/health/definitions",
+                                headers=_get_auth_header("app1", "letmein"))
         self.assertEqual(response.status_code, 500)
+
+    def test_health_check_requires_auth(self):
+        response = self.app.get("/health/definitions")
+
+        self.assertEqual(response.status_code, 401)
 
 
 class ClamAVRESTTestCase(unittest.TestCase):
@@ -93,10 +100,9 @@ class ClamAVRESTTestCase(unittest.TestCase):
         ping.side_effect = Exception("Oops")
 
         response = self.app.get("/")
-        
+
         self.assertEqual(response.status_code, 500)
         self.assertEqual(response.data, b'Service Unavailable')
-
 
     def test_scan_endpoint_requires_post(self):
         response = self.app.get("/scan")

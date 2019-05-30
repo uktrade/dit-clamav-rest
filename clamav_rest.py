@@ -75,6 +75,7 @@ def healthcheck():
 
 
 @app.route("/health/definitions", methods=["GET"])
+@auth.login_required
 def health_definitions():
     try:
         # no point in checking remote if local is down
