@@ -35,7 +35,7 @@ Pre-requisites
 
 #### Run the REST api
 
-    APP_CONFIG=config.LocalConfig nodemon clamav_rest.py
+    APP_CONFIG=config.LocalConfig python clamav_rest.py
 
 #### Health checks
 
