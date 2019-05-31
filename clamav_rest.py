@@ -6,7 +6,7 @@ import timeit
 from flask import Flask, request, g, jsonify
 from flask_httpauth import HTTPBasicAuth
 
-from clamav_versions import ClamAVRemoteVersionService, ClamAVLocalVersionService
+from clamav_versions import parse_remote_version, get_remote_version_text, get_local_version_text, parse_local_version
 
 import clamd
 from passlib.hash import pbkdf2_sha256 as hash
@@ -38,8 +38,7 @@ else:
         cd = clamd.ClamdNetworkSocket(
             host=app.config["CLAMD_HOST"], port=app.config["CLAMD_PORT"])
     except Exception as ex:
-        logger.error("error bootstrapping clamd for network socket")
-        logger.exception(ex)
+        logger.exception("error bootstrapping clamd for network socket")
 
 
 @auth.verify_password
@@ -57,6 +56,7 @@ def verify_pw(username, password):
 
 
 @app.route("/", methods=["GET"])
+@app.route("/check", methods=["GET"])
 def healthcheck():
     try:
         clamd_response = cd.ping()
@@ -67,44 +67,48 @@ def healthcheck():
         return "Service Down", 502
 
     except clamd.ConnectionError:
-        logger.exception("clamd.ConnectionError")
+        logger.error("clamd.ConnectionError")
         return "Service Unavailable", 502
-    except Exception as ex:
-        logger.exception(ex)
+
+    except BaseException as e:
+        logger.error(e)
         return "Service Unavailable", 500
 
 
-@app.route("/health/definitions", methods=["GET"])
-@auth.login_required
+@app.route("/check_warning", methods=["GET"])
 def health_definitions():
     try:
-        # no point in checking remote if local is down
-        local_service = ClamAVLocalVersionService(cd)
-        local_version_text = local_service.get_local_version_text()
+
+        local_version_text = get_local_version_text(cd)
 
         if not local_version_text:
-            raise Exception("local_version_text is empty - is clamav running")
+            raise BaseException(
+                "local_version_text is empty - is clamav running")
 
-        local_version = ClamAVLocalVersionService.parse_local_version(
+        local_version = parse_local_version(
             local_version_text
         )
-       
-        remote_service = ClamAVRemoteVersionService(
-            app.config["CLAMAV_TXT_URI"])
-        remote_version = ClamAVRemoteVersionService.parse_remote_version(
-            remote_service.get_remote_version_text())
+
+        remote_version_text = get_remote_version_text(app.config["CLAMAV_TXT_URI"])
+        remote_version = parse_remote_version(remote_version_text)
 
         version_msg = "local_version: %s remote_version: %s" % (
             local_version, remote_version)
+
         logger.info(version_msg)
 
         if remote_version == local_version:
             return remote_version
 
         return "Outdated %s" % version_msg, 500
-    except Exception as ex:
-        logger.exception('unexpected error')
-        return "Service Unavailable", 502
+
+    except clamd.ConnectionError:
+        logger.exception("failed to connect to upstream clamav daemon")
+        return "Service Unavailable", 500
+
+    except BaseException as e:
+        logger.exception("Unexpected error when checking av versions.")
+        return "Service Unavailable", 500
 
 
 @app.route("/scan", methods=["POST"])

@@ -39,31 +39,33 @@ class ClamAVirusUpdate(unittest.TestCase):
         clamav_rest.app.config['Testing'] = True
         self.app = clamav_rest.app.test_client()
 
-    @mock.patch("clamav_versions.ClamAVRemoteVersionService.parse_remote_version")
-    @mock.patch("clamav_versions.ClamAVLocalVersionService.parse_local_version")
-    def test_local_remote_services_are_insync(self, remote, local):
-        remote.return_value = "3"
-        local.return_value = "3"
+    @mock.patch("clamav_rest.get_remote_version_text")
+    @mock.patch("clamav_rest.get_local_version_text")
+    @mock.patch("clamav_rest.cd.ping")
+    def test_local_remote_services_are_insync(self, ping, local, remote):
+        remote.return_value = "220.101.2:58:1010101:1559294940:1:63:48725:32823"
 
-        response = self.app.get("/health/definitions",
-                                headers=_get_auth_header("app1", "letmein"))
+        local.return_value = "ClamAV 0.100.2/1010101/Fri May 31 07:57:34 2019"
+
+        response = self.app.get("/check_warning")
+
         self.assertEqual(response.status_code, 200)
-        self.assertEqual(response.data, b'3')
+        self.assertEqual(response.data, b'1010101')
 
-    @mock.patch("clamav_versions.ClamAVRemoteVersionService.parse_remote_version")
-    @mock.patch("clamav_versions.ClamAVLocalVersionService.parse_local_version")
-    def test_services_out_of_date(self, remote, local):
-        remote.return_value = "3"
-        local.return_value = "2"
+    @mock.patch("clamav_rest.get_remote_version_text")
+    @mock.patch("clamav_rest.get_local_version_text")
+    def test_services_out_of_date(self, local, remote):
+        remote.return_value = "220.101.2:58:25466:1559294940:1:63:48725:32823"
+        local.return_value = "ClamAV 0.100.2/25465/Fri May 31 07:57:34 2019"
 
-        response = self.app.get("/health/definitions",
-                                headers=_get_auth_header("app1", "letmein"))
+        response = self.app.get("/check_warning")
+
         self.assertEqual(response.status_code, 500)
 
-    def test_health_check_requires_auth(self):
-        response = self.app.get("/health/definitions")
+    def test_health_check_does_not_require_auth(self):
+        response = self.app.get("/check_warning")
 
-        self.assertEqual(response.status_code, 401)
+        self.assertEqual(response.status_code, 200)
 
 
 class ClamAVRESTTestCase(unittest.TestCase):
@@ -73,7 +75,7 @@ class ClamAVRESTTestCase(unittest.TestCase):
         self.app = clamav_rest.app.test_client()
 
     def test_healthcheck(self):
-        response = self.app.get("/")
+        response = self.app.get("/check")
         self.assertEqual(response.status_code, 200)
         self.assertEqual(response.data, b'Service OK')
 
@@ -81,7 +83,7 @@ class ClamAVRESTTestCase(unittest.TestCase):
     def test_healthcheck_no_service(self, ping):
         ping.side_effect = clamd.ConnectionError()
 
-        response = self.app.get("/")
+        response = self.app.get("/check")
 
         self.assertEqual(response.status_code, 502)
         self.assertEqual(response.data, b'Service Unavailable')
@@ -90,7 +92,7 @@ class ClamAVRESTTestCase(unittest.TestCase):
     def test_healthcheck_unexpected_error(self, ping):
         ping.side_effect = Exception("Oops")
 
-        response = self.app.get("/")
+        response = self.app.get("/check")
 
         self.assertEqual(response.status_code, 500)
         self.assertEqual(response.data, b'Service Unavailable')
@@ -99,7 +101,7 @@ class ClamAVRESTTestCase(unittest.TestCase):
     def test_healthcheck_unexpected_error(self, ping):
         ping.side_effect = Exception("Oops")
 
-        response = self.app.get("/")
+        response = self.app.get("/check")
 
         self.assertEqual(response.status_code, 500)
         self.assertEqual(response.data, b'Service Unavailable')
