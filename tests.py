@@ -62,11 +62,6 @@ class ClamAVirusUpdate(unittest.TestCase):
 
         self.assertEqual(response.status_code, 500)
 
-    def test_health_check_does_not_require_auth(self):
-        response = self.app.get("/check_warning")
-
-        self.assertEqual(response.status_code, 200)
-
 
 class ClamAVRESTTestCase(unittest.TestCase):
 
