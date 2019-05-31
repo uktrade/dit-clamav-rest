@@ -41,14 +41,14 @@ Pre-requisites
 
 Basic Service Check
 
-    curl -X GET localhost:8090
+    curl -i localhost:8090
 
 
 Virus definitions check
 Check [Authentication](###Authentication) for `username` and `password` details
 
 
-    curl localhost:8090/health/definitions --user username:password
+    curl -i localhost:8090/health/definitions --user username:password
 
 
 returns
