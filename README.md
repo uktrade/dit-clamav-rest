@@ -45,8 +45,11 @@ Basic Service Check
 
 
 Virus definitions check
+Check [Authentication](###Authentication) for `username` and `password` details
 
-    curl localhost:8090/health/definitions
+
+    curl localhost:8090/health/definitions --user username:password
+
 
 returns
 
