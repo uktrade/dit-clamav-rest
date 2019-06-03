@@ -6,7 +6,7 @@ import timeit
 from flask import Flask, request, g, jsonify
 from flask_httpauth import HTTPBasicAuth
 
-from clamav_versions import parse_remote_version, get_remote_version_text, get_local_version_text, parse_local_version
+from clamav_versions import get_remote_version_number, get_local_version_number
 
 import clamd
 from passlib.hash import pbkdf2_sha256 as hash
@@ -79,28 +79,17 @@ def healthcheck():
 def health_definitions():
     try:
 
-        local_version_text = get_local_version_text(cd)
+        local_version = get_local_version_number(cd)
+        remote_version = get_remote_version_number(app.config["CLAMAV_TXT_URI"])
 
-        if not local_version_text:
-            raise BaseException(
-                "local_version_text is empty - is clamav running")
-
-        local_version = parse_local_version(
-            local_version_text
-        )
-
-        remote_version_text = get_remote_version_text(app.config["CLAMAV_TXT_URI"])
-        remote_version = parse_remote_version(remote_version_text)
-
-        version_msg = "local_version: %s remote_version: %s" % (
-            local_version, remote_version)
+        version_msg = f"local_version: {local_version} remote_version: {remote_version}"
 
         logger.info(version_msg)
 
         if remote_version == local_version:
             return remote_version
 
-        return "Outdated %s" % version_msg, 500
+        return f"Outdated {version_msg}", 500
 
     except clamd.ConnectionError:
         logger.exception("failed to connect to upstream clamav daemon")

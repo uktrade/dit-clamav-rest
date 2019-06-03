@@ -7,6 +7,7 @@ import clamd
 import mock
 
 import clamav_rest
+from clamav_versions import parse_local_version, parse_remote_version
 
 EICAR = b"X5O!P%@AP[4\PZX54(P^)7CC)7}$EICAR-STANDARD-ANTIVIRUS-TEST-FILE!$H+H*"
 
@@ -25,12 +26,30 @@ def _get_file_data(file_name, data):
 
 def _read_file_data(file_name):
     with open(file_name, "rb") as binary_file:
-        # Read the whole file at once
         data = binary_file.read()
 
     return dict(
         file=(BytesIO(data), file_name)
     )
+
+
+class ClamAVVersionParsing(unittest.TestCase):
+
+    def test_parse_local_version(self):
+        expected_version = "12321"
+        local_version_text = f"ClamAV 0.100.2/{expected_version}/Fri May 31 07:57:34 2019"
+
+        local_version_number = parse_local_version(local_version_text)
+
+        self.assertEqual(local_version_number, expected_version)
+
+    def test_parse_remote_version(self):
+        expected_version = "remote"
+        remote_version_text = f"220.101.2:58:{expected_version}:1559294940:1:63:48725:32823"
+
+        remote_version_number = parse_remote_version(remote_version_text)
+
+        self.assertEqual(remote_version_number, expected_version)
 
 
 class ClamAVirusUpdate(unittest.TestCase):
@@ -39,24 +58,23 @@ class ClamAVirusUpdate(unittest.TestCase):
         clamav_rest.app.config['Testing'] = True
         self.app = clamav_rest.app.test_client()
 
-    @mock.patch("clamav_rest.get_remote_version_text")
-    @mock.patch("clamav_rest.get_local_version_text")
+    @mock.patch("clamav_rest.get_remote_version_number")
+    @mock.patch("clamav_rest.get_local_version_number")
     @mock.patch("clamav_rest.cd.ping")
     def test_local_remote_services_are_insync(self, ping, local, remote):
-        remote.return_value = "220.101.2:58:1010101:1559294940:1:63:48725:32823"
-
-        local.return_value = "ClamAV 0.100.2/1010101/Fri May 31 07:57:34 2019"
+        remote.return_value = "1010101"
+        local.return_value = "1010101"
 
         response = self.app.get("/check_warning")
 
         self.assertEqual(response.status_code, 200)
         self.assertEqual(response.data, b'1010101')
 
-    @mock.patch("clamav_rest.get_remote_version_text")
-    @mock.patch("clamav_rest.get_local_version_text")
+    @mock.patch("clamav_rest.get_remote_version_number")
+    @mock.patch("clamav_rest.get_local_version_number")
     def test_services_out_of_date(self, local, remote):
-        remote.return_value = "220.101.2:58:25466:1559294940:1:63:48725:32823"
-        local.return_value = "ClamAV 0.100.2/25465/Fri May 31 07:57:34 2019"
+        remote.return_value = "25466"
+        local.return_value = "25465"
 
         response = self.app.get("/check_warning")
 

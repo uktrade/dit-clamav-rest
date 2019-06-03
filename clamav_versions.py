@@ -19,7 +19,7 @@ def split_version(version_text, divider, offset):
     try:
         return split[offset]
     except IndexError:
-        raise Exception("version_text does not contain %s items" % offset + 1)
+        raise Exception("version_text does not contain %d items" % offset + 1)
 
 
 def parse_local_version(version_text):
@@ -31,10 +31,20 @@ def get_local_version_text(clamav):
     logger.info("local_version is %s" % version)
     return version
 
+def get_local_version_number(clamav):
+    text = get_local_version_text(clamav)
+    if not text:
+        raise BaseException(
+                "local_version_text is empty - is clamav running")
+    
+    return parse_local_version(text)
 
 def parse_remote_version(version_text):
     return split_version(version_text, ':', 2)
 
+def get_remote_version_number(uri):
+    text = get_remote_version_text(uri)
+    return parse_remote_version(text)
 
 def get_remote_version_text(uri):
     answers = dns.resolver.query(uri, "TXT")
