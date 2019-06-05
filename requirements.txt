@@ -5,6 +5,7 @@ passlib==1.7.1
 Flask-HTTPAuth==3.2.2
 gunicorn==19.7.1
 blinker==1.4
+dnspython==1.15.0
 
 # required for tests
 mock==2.0.0

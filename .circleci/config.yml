@@ -5,14 +5,12 @@ jobs:
       - image: circleci/python:3.6.8
       - image: ukti/docker-clamav:latest
 
-    steps:  
+    steps:
       - checkout
 
       - restore_cache:
           keys:
-            - pip-dependencies-{{ checksum "requirements.txt" }}
-            # fallback to using the latest cache if no exact match is found
-            - pip-dependencies-
+            - pip-dependencies-v2-{{ checksum "requirements.txt" }}
 
       - run:
           name: Create virtualenv and install dependencies
@@ -31,7 +29,6 @@ jobs:
               sleep 1
             done
             echo clamav container never arrived && exit 1
-          
 
       - run:
           name: Wait for clamav to be ready
@@ -50,11 +47,10 @@ jobs:
             done
             echo Failed waiting for clamav && exit 1
 
-
       - save_cache:
           paths:
             - venv
-          key: pip-dependencies-{{ checksum "requirements.txt" }}
+          key: pip-dependencies-v2-{{ checksum "requirements.txt" }}
 
       - run:
           name: Run unit tests

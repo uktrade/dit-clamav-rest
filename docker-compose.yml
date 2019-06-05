@@ -17,8 +17,3 @@ services:
       - APP_CONFIG=config.TestConfig
   clamd:
     image: ukti/docker-clamav:latest
-    # Expose these ports if you need to connect directly for dev etc.
-    # then you can run 
-    # echo PING | nc localhost 3310
-    # ports:
-      # - 3310:3310
