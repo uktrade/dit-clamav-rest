@@ -9,7 +9,7 @@ import mock
 import clamav_rest
 from clamav_versions import parse_local_version, parse_remote_version
 
-#pylint: disable=anomalous-backslash-in-string
+# pylint: disable=anomalous-backslash-in-string
 EICAR = b"X5O!P%@AP[4\PZX54(P^)7CC)7}$EICAR-STANDARD-ANTIVIRUS-TEST-FILE!$H+H*"
 
 
