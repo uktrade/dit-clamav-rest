@@ -2,9 +2,9 @@ import base64
 import json
 import unittest
 from io import BytesIO
+import mock
 
 import clamd
-import mock
 
 import clamav_rest
 from clamav_versions import parse_local_version, parse_remote_version
