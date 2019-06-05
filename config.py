@@ -27,8 +27,10 @@ class CircleCiConfig(BaseConfig):
     # pwd: letmein
     APPLICATION_USERS = "app1::$pbkdf2-sha256$29000$LiWkFELo3TvHGANACAGAkA$Re51NLQNiCYy0UAdnFbNfLltFDmiJOOzqjMPFRVBgMM"
 
+
 class LocalConfig(CircleCiConfig):
     pass
+
 
 class TestConfig(BaseConfig):
     DEBUG = True

@@ -9,6 +9,7 @@ import mock
 import clamav_rest
 from clamav_versions import parse_local_version, parse_remote_version
 
+#pylint: disable=anomalous-backslash-in-string
 EICAR = b"X5O!P%@AP[4\PZX54(P^)7CC)7}$EICAR-STANDARD-ANTIVIRUS-TEST-FILE!$H+H*"
 
 
@@ -34,7 +35,6 @@ def _read_file_data(file_name):
 
 
 class ClamAVVersionParsing(unittest.TestCase):
-
     def test_parse_local_version(self):
         expected_version = "12321"
         local_version_text = f"ClamAV 0.100.2/{expected_version}/Fri May 31 07:57:34 2019"
@@ -111,7 +111,7 @@ class ClamAVRESTTestCase(unittest.TestCase):
         self.assertEqual(response.data, b'Service Unavailable')
 
     @mock.patch("clamav_rest.cd.ping")
-    def test_healthcheck_unexpected_error(self, ping):
+    def test_healthcheck_unexpected_error_original(self, ping):
         ping.side_effect = Exception("Oops")
 
         response = self.app.get("/check")
@@ -176,8 +176,8 @@ class ClamAVRESTV2ScanTestCase(unittest.TestCase):
 
         data = json.loads(response.data.decode('utf8'))
 
-        self.assertEqual(data['malware'], True)
-        self.assertEqual(data['reason'], "Heuristics.Encrypted.Zip")
+        self.assertEqual(data["malware"], True)
+        self.assertEqual(data["reason"], "Heuristics.Encrypted.Zip")
 
     def test_eicar(self):
         response = self.app.post("/v2/scan",
@@ -189,8 +189,8 @@ class ClamAVRESTV2ScanTestCase(unittest.TestCase):
 
         data = json.loads(response.data.decode('utf8'))
 
-        self.assertEqual(data['malware'], True)
-        self.assertEqual(data['reason'], "Eicar-Test-Signature")
+        self.assertEqual(data["malware"], True)
+        self.assertEqual(data["reason"], "Eicar-Test-Signature")
 
 
 if __name__ == '__main__':

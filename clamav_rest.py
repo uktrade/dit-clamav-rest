@@ -37,7 +37,7 @@ else:
     try:
         cd = clamd.ClamdNetworkSocket(
             host=app.config["CLAMD_HOST"], port=app.config["CLAMD_PORT"])
-    except Exception as ex:
+    except BaseException:
         logger.exception("error bootstrapping clamd for network socket")
 
 
@@ -80,7 +80,8 @@ def health_definitions():
     try:
 
         local_version = get_local_version_number(cd)
-        remote_version = get_remote_version_number(app.config["CLAMAV_TXT_URI"])
+        remote_version = get_remote_version_number(
+            app.config["CLAMAV_TXT_URI"])
 
         version_msg = f"local_version: {local_version} remote_version: {remote_version}"
 
@@ -95,7 +96,7 @@ def health_definitions():
         logger.exception("failed to connect to upstream clamav daemon")
         return "Service Unavailable", 500
 
-    except BaseException as e:
+    except BaseException:
         logger.exception("Unexpected error when checking av versions.")
         return "Service Unavailable", 500
 

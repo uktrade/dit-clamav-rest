@@ -34,7 +34,7 @@ def get_local_version_text(clamav):
 def get_local_version_number(clamav):
     text = get_local_version_text(clamav)
     if not text:
-        raise BaseException(
+        raise Exception(
                 "local_version_text is empty - is clamav running")
     
     return parse_local_version(text)
