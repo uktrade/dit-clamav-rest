@@ -1,4 +1,4 @@
-FROM python:3.3.6-wheezy
+FROM python:3.7.3-stretch
 
 ENV PORT 8090
 EXPOSE $PORT
