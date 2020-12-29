@@ -1,7 +1,10 @@
+import io
 import os
 import logging
 import sys
 import timeit
+import urllib
+import uuid
 
 from flask import Flask, request, g, jsonify
 from flask_httpauth import HTTPBasicAuth
@@ -163,6 +166,56 @@ def scan_v2():
     ))
 
     return jsonify(response)
+
+
+@app.route("/v2/scan-chunked", methods=["POST"])
+@auth.login_required
+def scan_chunks():
+    try:
+        chunk_size = 4096
+        file_name = uuid.uuid4()
+        file_bytes = io.BytesIO()
+
+        chunk = request.stream.read(chunk_size)
+
+        if len(chunk) == 0:
+            logger.error("Chunk size is zero, cannot process file")
+            return "Chunk size is zero, cannot process file", 500
+
+        while not request.stream.is_exhausted:
+            try:
+                file_bytes.write(chunk)
+                chunk = request.stream.read(chunk_size)
+            except Exception as ex:
+                logger.error(f"Exception thrown when reading chunk, ex: '{ex}'")
+                return "Exception thrown when reading chunk", 500
+
+        logger.info(
+            f"Starting scan for {g.current_user} of {file_name}"
+        )
+
+        file_bytes.seek(0)
+
+        start_time = timeit.default_timer()
+        resp = cd.instream(file_bytes)
+        elapsed = timeit.default_timer() - start_time
+
+        status, reason = resp["stream"]
+
+        response = {
+            'malware': False if status == "OK" else True,
+            'reason': reason,
+            'time': elapsed
+        }
+
+        logger.info(
+            f"Scan chunk v2 for {g.current_user} of {file_name} complete. Took: {elapsed}. Malware found?: {response['malware']}"
+        )
+
+        return jsonify(response)
+    except Exception as ex:
+        logger.error(f"Exception thrown whilst processing file chunks, ex: '{ex}'")
+        return "Exception thrown whilst processing file chunks", 500
 
 
 if __name__ == "__main__":

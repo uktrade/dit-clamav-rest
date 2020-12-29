@@ -11,6 +11,8 @@ services:
       - clamav_rest:clamav_rest
   clamav_rest:
     build: .
+    volumes:
+      - ./:/srv/clamav-rest
     links:
       - clamd:clamd
     environment:
