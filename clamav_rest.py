@@ -5,6 +5,7 @@ import sys
 import timeit
 import urllib
 import uuid
+from datetime import datetime
 
 from flask import Flask, request, g, jsonify
 from flask_httpauth import HTTPBasicAuth
@@ -21,6 +22,7 @@ logger = logging.getLogger("CLAMAV-REST")
 
 app = Flask("CLAMAV-REST")
 app.config.from_object(os.environ['APP_CONFIG'])
+app.config['MAX_CONTENT_LENGTH'] = 9999999
 
 try:
     APPLICATION_USERS = dict([user.split("::") for user in
@@ -172,7 +174,8 @@ def scan_v2():
 @auth.login_required
 def scan_chunks():
     try:
-        chunk_size = 4096
+        chunk_num = 0
+        chunk_size = 5 * 1024 * 1024
         file_name = uuid.uuid4()
         file_bytes = io.BytesIO()
 
@@ -182,7 +185,7 @@ def scan_chunks():
             logger.error("Chunk size is zero, cannot process file")
             return "Chunk size is zero, cannot process file", 500
 
-        while not request.stream.is_exhausted:
+        while chunk:
             try:
                 file_bytes.write(chunk)
                 chunk = request.stream.read(chunk_size)
@@ -197,6 +200,7 @@ def scan_chunks():
         file_bytes.seek(0)
 
         start_time = timeit.default_timer()
+
         resp = cd.instream(file_bytes)
         elapsed = timeit.default_timer() - start_time
 
@@ -219,4 +223,4 @@ def scan_chunks():
 
 
 if __name__ == "__main__":
-    app.run(host=app.config["HOST"], port=app.config["PORT"])
+    app.run(host=app.config["HOST"], port=app.config["PORT"], threaded=True, debug=True)

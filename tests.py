@@ -1,8 +1,10 @@
+import io
 import base64
 import json
 import unittest
 from io import BytesIO
 import mock
+import requests
 
 import clamd
 
@@ -192,6 +194,72 @@ class ClamAVRESTV2ScanTestCase(unittest.TestCase):
         self.assertEqual(data["malware"], True)
         self.assertEqual(data["reason"], "Eicar-Test-Signature")
 
+class ClamAVRESTV2ScanChunkedTestCase(unittest.TestCase):
+    def setUp(self):
+        clamav_rest.app.config['TESTING'] = True
+        self.app = clamav_rest.app.test_client()
+        self.headers = _get_auth_header("app1", "letmein")
+        self.headers["Transfer-encoding"] = "chunked"
+        self.chunk_url = "http://{0}/v2/scan-chunked".format(
+            clamav_rest.app.config["NGINX_HOST"]
+        )
+
+    def _eicar_gen(self):
+        yield b"X5O!P%@AP[4\PZX54(P^)7CC)7}$"
+        yield b"EICAR-STANDARD-ANTIVIRUS-TEST-FILE!$H+H*"
+
+    def _archive_file(self):
+        with open("client-examples/protected.zip", "rb") as binary_file:
+            data = binary_file.read()
+
+        with io.BytesIO(data) as file_data:
+            while True:
+                # Yield 10 byte chunks
+                chunk = file_data.read(10)
+                yield chunk
+                
+                if not chunk:
+                    break
+
+    def _text_file(self):
+        yield b"NO VIRUS HERE"
+        yield b"NO VIRUS HERE"
+
+    def test_encrypyed_archive(self):
+        response = requests.post(
+            self.chunk_url,
+            headers=self.headers,
+            data=self._archive_file(),
+        )
+
+        data = response.json()
+
+        self.assertEqual(data["malware"], True)
+        self.assertEqual(data["reason"], "Heuristics.Encrypted.Zip")
+
+    def test_eicar(self):
+        response = requests.post(
+            self.chunk_url,
+            headers=self.headers,
+            data=self._eicar_gen(),
+        )
+
+        data = response.json()
+
+        self.assertEqual(data["malware"], True)
+        self.assertEqual(data["reason"], "Eicar-Test-Signature")
+
+    def test_clean_data(self):
+        response = requests.post(
+            self.chunk_url,
+            headers=self.headers,
+            data=self._text_file(),
+        )
+
+        data = response.json()
+
+        self.assertEqual(data["malware"], False)
+        self.assertEqual(response.status_code, 200)
 
 if __name__ == '__main__':
     unittest.main()

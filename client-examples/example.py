@@ -4,9 +4,29 @@
 
 import requests
 
+
 auth = ("app1", "letmein")
 files = {"file": open("eicar.txt", "rb")}
 
-response = requests.post("http://localhost:8090/scan", auth=auth, files=files)
+# Standard scan
+response = requests.post("http://localhost/v2/scan", auth=auth, files=files)
 
+print("Standard request response:")
+print(response.text)
+
+# Chunked scan
+def _eicar_gen():
+    yield b"X5O!P%@AP[4\PZX54(P^)7CC)7}$"
+    yield b"EICAR-STANDARD-ANTIVIRUS-TEST-FILE!$H+H*"
+
+response = requests.post(
+    "http://localhost/v2/scan-chunked",
+    auth=auth,
+    headers={
+    	"Transfer-encoding": "chunked"
+    },
+    data=_eicar_gen(),
+)
+
+print("Chunked request response:")
 print(response.text)
