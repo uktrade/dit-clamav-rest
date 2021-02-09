@@ -1,13 +1,17 @@
+import io
 import base64
 import json
 import unittest
 from io import BytesIO
 import mock
+import requests
 
 import clamd
 
 import clamav_rest
 from clamav_versions import parse_local_version, parse_remote_version
+
+from flask_testing import LiveServerTestCase
 
 # pylint: disable=anomalous-backslash-in-string
 EICAR = b"X5O!P%@AP[4\PZX54(P^)7CC)7}$EICAR-STANDARD-ANTIVIRUS-TEST-FILE!$H+H*"
@@ -192,6 +196,74 @@ class ClamAVRESTV2ScanTestCase(unittest.TestCase):
         self.assertEqual(data["malware"], True)
         self.assertEqual(data["reason"], "Eicar-Test-Signature")
 
+class ClamAVRESTV2ScanChunkedTestCase(LiveServerTestCase):
+    def create_app(self):
+        app = clamav_rest.app
+        app.config['TESTING'] = True
+
+        return app
+
+    def setUp(self):
+        self.headers = _get_auth_header("app1", "letmein")
+        self.headers["Transfer-encoding"] = "chunked"
+        self.chunk_url = "http://localhost:5000/v2/scan-chunked"
+
+    def _eicar_gen(self):
+        yield b"X5O!P%@AP[4\PZX54(P^)7CC)7}$"
+        yield b"EICAR-STANDARD-ANTIVIRUS-TEST-FILE!$H+H*"
+
+    def _archive_file(self):
+        with open("client-examples/protected.zip", "rb") as binary_file:
+            data = binary_file.read()
+
+        with io.BytesIO(data) as file_data:
+            while True:
+                # Yield 10 byte chunks
+                chunk = file_data.read(10)
+                yield chunk
+                
+                if not chunk:
+                    break
+
+    def _text_file(self):
+        yield b"NO VIRUS HERE"
+        yield b"NO VIRUS HERE"
+
+    def test_encrypyed_archive(self):
+        response = requests.post(
+            self.chunk_url,
+            headers=self.headers,
+            data=self._archive_file(),
+        )
+
+        data = response.json()
+
+        self.assertEqual(data["malware"], True)
+        self.assertEqual(data["reason"], "Heuristics.Encrypted.Zip")
+
+    def test_eicar(self):
+        response = requests.post(
+            self.chunk_url,
+            headers=self.headers,
+            data=self._eicar_gen(),
+        )
+
+        data = response.json()
+
+        self.assertEqual(data["malware"], True)
+        self.assertEqual(data["reason"], "Eicar-Test-Signature")
+
+    def test_clean_data(self):
+        response = requests.post(
+            self.chunk_url,
+            headers=self.headers,
+            data=self._text_file(),
+        )
+
+        data = response.json()
+
+        self.assertEqual(data["malware"], False)
+        self.assertEqual(response.status_code, 200)
 
 if __name__ == '__main__':
     unittest.main()

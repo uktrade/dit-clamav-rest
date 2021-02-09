@@ -22,6 +22,7 @@ class ProductionConfig(BaseConfig):
 
 class CircleCiConfig(BaseConfig):
     CLAMD_HOST = "localhost"
+
     DEBUG = True
     TESTING = True
     # pwd: letmein
@@ -35,7 +36,6 @@ class LocalConfig(CircleCiConfig):
 class TestConfig(BaseConfig):
     DEBUG = True
     TESTING = True
-
     # pwd: letmein
     APPLICATION_USERS = "app1::$pbkdf2-sha256$29000$LiWkFELo3TvHGANACAGAkA$Re51NLQNiCYy0UAdnFbNfLltFDmiJOOzqjMPFRVBgMM"
 

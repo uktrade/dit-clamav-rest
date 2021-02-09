@@ -1,7 +1,11 @@
+import io
 import os
 import logging
 import sys
 import timeit
+import urllib
+import uuid
+from datetime import datetime
 
 from flask import Flask, request, g, jsonify
 from flask_httpauth import HTTPBasicAuth
@@ -18,6 +22,7 @@ logger = logging.getLogger("CLAMAV-REST")
 
 app = Flask("CLAMAV-REST")
 app.config.from_object(os.environ['APP_CONFIG'])
+app.config['MAX_CONTENT_LENGTH'] = 9999999
 
 try:
     APPLICATION_USERS = dict([user.split("::") for user in
@@ -163,6 +168,34 @@ def scan_v2():
     ))
 
     return jsonify(response)
+
+
+@app.route("/v2/scan-chunked", methods=["POST"])
+@auth.login_required
+def scan_chunks():
+    try:
+        file_name = uuid.uuid4()
+
+        start_time = timeit.default_timer()
+        resp = cd.instream(request.stream)
+        elapsed = timeit.default_timer() - start_time
+
+        status, reason = resp["stream"]
+
+        response = {
+            'malware': False if status == "OK" else True,
+            'reason': reason,
+            'time': elapsed
+        }
+
+        logger.info(
+            f"Scan chunk v2 for {g.current_user} of {file_name} complete. Took: {elapsed}. Malware found?: {response['malware']}"
+        )
+
+        return jsonify(response)
+    except Exception as ex:
+        logger.error(f"Exception thrown whilst processing file chunks, ex: '{ex}'")
+        return "Exception thrown whilst processing file chunks", 500
 
 
 if __name__ == "__main__":
