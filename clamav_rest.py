@@ -174,34 +174,10 @@ def scan_v2():
 @auth.login_required
 def scan_chunks():
     try:
-        chunk_num = 0
-        chunk_size = 5 * 1024 * 1024
         file_name = uuid.uuid4()
-        file_bytes = io.BytesIO()
-
-        chunk = request.stream.read(chunk_size)
-
-        if len(chunk) == 0:
-            logger.error("Chunk size is zero, cannot process file")
-            return "Chunk size is zero, cannot process file", 500
-
-        while chunk:
-            try:
-                file_bytes.write(chunk)
-                chunk = request.stream.read(chunk_size)
-            except Exception as ex:
-                logger.error(f"Exception thrown when reading chunk, ex: '{ex}'")
-                return "Exception thrown when reading chunk", 500
-
-        logger.info(
-            f"Starting scan for {g.current_user} of {file_name}"
-        )
-
-        file_bytes.seek(0)
 
         start_time = timeit.default_timer()
-
-        resp = cd.instream(file_bytes)
+        resp = cd.instream(request.stream)
         elapsed = timeit.default_timer() - start_time
 
         status, reason = resp["stream"]
