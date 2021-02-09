@@ -85,3 +85,7 @@ current.cvd.clamav.net descriptive text "0.101.2:58:25477:1560317340:1:63:48760:
 ```
 
 In this example the version is `25477`
+
+## Running client examples
+
+In the client-examples folder you will find a number of examples files you can use to try the service.

@@ -8,10 +8,16 @@ import requests
 auth = ("app1", "letmein")
 files = {"file": open("eicar.txt", "rb")}
 
-# Standard scan
+# Standard V1 scan
+response = requests.post("http://localhost/scan", auth=auth, files=files)
+
+print("Standard V1 request response:")
+print(response.text)
+
+# Standard V2 scan
 response = requests.post("http://localhost/v2/scan", auth=auth, files=files)
 
-print("Standard request response:")
+print("Standard V2 request response:")
 print(response.text)
 
 # Chunked scan
