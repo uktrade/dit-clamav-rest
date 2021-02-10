@@ -16,6 +16,11 @@ from flask_testing import LiveServerTestCase
 # pylint: disable=anomalous-backslash-in-string
 EICAR = b"X5O!P%@AP[4\PZX54(P^)7CC)7}$EICAR-STANDARD-ANTIVIRUS-TEST-FILE!$H+H*"
 
+EICAR_TEST_OUTPUTS = (
+    "Eicar-Test-Signature",
+    "Win.Test.EICAR_HDB-1",
+)
+
 
 def _get_auth_header(username, password):
     creds = base64.b64encode(
@@ -194,7 +199,7 @@ class ClamAVRESTV2ScanTestCase(unittest.TestCase):
         data = json.loads(response.data.decode('utf8'))
 
         self.assertEqual(data["malware"], True)
-        self.assertEqual(data["reason"], "Win.Test.EICAR_HDB-1")
+        assert data["reason"] in EICAR_TEST_OUTPUTS
 
 class ClamAVRESTV2ScanChunkedTestCase(LiveServerTestCase):
     def create_app(self):
@@ -251,7 +256,7 @@ class ClamAVRESTV2ScanChunkedTestCase(LiveServerTestCase):
         data = response.json()
 
         self.assertEqual(data["malware"], True)
-        self.assertEqual(data["reason"], "Win.Test.EICAR_HDB-1")
+        assert data["reason"] in EICAR_TEST_OUTPUTS
 
     def test_clean_data(self):
         response = requests.post(
