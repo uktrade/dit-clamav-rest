@@ -3,7 +3,7 @@ import base64
 import json
 import unittest
 from io import BytesIO
-import mock
+from unittest import mock
 import requests
 
 import clamd
@@ -194,7 +194,7 @@ class ClamAVRESTV2ScanTestCase(unittest.TestCase):
         data = json.loads(response.data.decode('utf8'))
 
         self.assertEqual(data["malware"], True)
-        self.assertEqual(data["reason"], "Eicar-Test-Signature")
+        self.assertEqual(data["reason"], "Win.Test.EICAR_HDB-1")
 
 class ClamAVRESTV2ScanChunkedTestCase(LiveServerTestCase):
     def create_app(self):
@@ -251,7 +251,7 @@ class ClamAVRESTV2ScanChunkedTestCase(LiveServerTestCase):
         data = response.json()
 
         self.assertEqual(data["malware"], True)
-        self.assertEqual(data["reason"], "Eicar-Test-Signature")
+        self.assertEqual(data["reason"], "Win.Test.EICAR_HDB-1")
 
     def test_clean_data(self):
         response = requests.post(

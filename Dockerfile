@@ -1,4 +1,4 @@
-FROM python:3.7.3-stretch
+FROM python:3.9.1-buster
 
 ENV PORT 8090
 EXPOSE $PORT
