@@ -22,7 +22,6 @@ logger = logging.getLogger("CLAMAV-REST")
 
 app = Flask("CLAMAV-REST")
 app.config.from_object(os.environ['APP_CONFIG'])
-app.config['MAX_CONTENT_LENGTH'] = 9999999
 
 try:
     APPLICATION_USERS = dict([user.split("::") for user in
@@ -196,6 +195,15 @@ def scan_chunks():
     except Exception as ex:
         logger.error(f"Exception thrown whilst processing file chunks, ex: '{ex}'")
         return "Exception thrown whilst processing file chunks", 500
+
+
+@app.errorhandler(413)
+def request_entity_too_large(error):
+    """Handle 413 Request Entity Too Large.
+
+    Rather than just chop the connection, return a 413.
+    """
+    return 'File Too Large', 413
 
 
 if __name__ == "__main__":

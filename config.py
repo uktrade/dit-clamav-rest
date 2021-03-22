@@ -1,6 +1,9 @@
 import os
 
 
+DEFAULT_MAX_CONTENT_LENGTH = 1 * 1024 * 1024 * 1024  # 1 Gb
+
+
 class BaseConfig(object):
     DEBUG = False
     TESTING = False
@@ -14,6 +17,7 @@ class BaseConfig(object):
     CLAMD_PORT = 3310
     HOST = "0.0.0.0"
     PORT = int(os.environ.get('PORT', '8090'))
+    MAX_CONTENT_LENGTH = int(os.environ.get('MAX_CONTENT_LENGTH', DEFAULT_MAX_CONTENT_LENGTH))
 
 
 class ProductionConfig(BaseConfig):
@@ -38,5 +42,5 @@ class TestConfig(BaseConfig):
     TESTING = True
     # pwd: letmein
     APPLICATION_USERS = "app1::$pbkdf2-sha256$29000$LiWkFELo3TvHGANACAGAkA$Re51NLQNiCYy0UAdnFbNfLltFDmiJOOzqjMPFRVBgMM"
-
     CLAMD_HOST = "clamd"
+    MAX_CONTENT_LENGTH = 4999999  # Smidge under 5MB
