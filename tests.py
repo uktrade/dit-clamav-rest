@@ -5,6 +5,7 @@ import unittest
 from io import BytesIO
 from unittest import mock
 import requests
+import logging
 
 import clamd
 
@@ -201,6 +202,32 @@ class ClamAVRESTV2ScanTestCase(unittest.TestCase):
         self.assertEqual(data["malware"], True)
         assert data["reason"] in EICAR_TEST_OUTPUTS
 
+    def test_payload_right_size(self):
+        # Fake content - 4.9Mb
+        content = b"\0" * (clamav_rest.app.config['MAX_CONTENT_LENGTH'] - 10000)
+        response = self.app.post("/scan",
+                                 headers=_get_auth_header("app1", "letmein"),
+                                 content_type='multipart/form-data',
+                                 data=_get_file_data(
+                                     "4_9Mb.bin", content)
+                                 )
+        self.assertEqual(response.data, b"OK")
+        self.assertEqual(response.status_code, 200)
+
+    def test_payload_too_large(self):
+        logger = logging.getLogger('raven.base.Client')
+        logger.disabled = True  # Sentry be quiet
+        content = b"\0" * clamav_rest.app.config['MAX_CONTENT_LENGTH']
+        response = self.app.post("/scan",
+                                 headers=_get_auth_header("app1", "letmein"),
+                                 content_type='multipart/form-data',
+                                 data=_get_file_data(
+                                     "5Mb.bin", content)
+                                 )
+        self.assertEqual(response.data, b"File Too Large")
+        self.assertEqual(response.status_code, 413)
+
+
 class ClamAVRESTV2ScanChunkedTestCase(LiveServerTestCase):
     def create_app(self):
         app = clamav_rest.app
@@ -223,7 +250,7 @@ class ClamAVRESTV2ScanChunkedTestCase(LiveServerTestCase):
 
         with io.BytesIO(data) as file_data:
             while True:
-                # Yield 10 byte chunks
+                # Yield 10 byte chunks
                 chunk = file_data.read(10)
                 yield chunk
                 
@@ -269,6 +296,7 @@ class ClamAVRESTV2ScanChunkedTestCase(LiveServerTestCase):
 
         self.assertEqual(data["malware"], False)
         self.assertEqual(response.status_code, 200)
+
 
 if __name__ == '__main__':
     unittest.main()
