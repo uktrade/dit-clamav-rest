@@ -22,6 +22,11 @@ Assuming you have passlib installed, you can generate a password hash like this:
 Check the logs with `docker-compose logs -f` to make sure `clamd` is up before
 trying examples below.
 
+> NB: The docker-compose config spins up an NGINX instance
+> that listens on port 80. Its configuration specifies a `client_max_body_size`
+> of 600Mb which takes precedence over `MAX_CONTENT_LENGTH` env var if
+> specified (and `config.DEFAULT_MAX_CONTENT_LENGTH` if not).
+
 ## Service health
 The following URIs (using a docker compose setup with NGINX proxy listening on
 port 80) do not require authentication and perform a basic service health
@@ -86,11 +91,6 @@ Here we post a fake 'infected' file called eicar.txt:
       "reason": "Eicar-Test-Signature",
       "time": 0.0032407999970018864
     }
-
-> NB: The docker-compose config spins up an NGINX instance
-> that listens on port 80. Its configuration specifies a `client_max_body_size`
-> of 600Mb which takes precedence over `MAX_CONTENT_LENGTH` env var if
-> specified (and `config.DEFAULT_MAX_CONTENT_LENGTH` if not).
 
 ## Running other client examples
 
