@@ -113,6 +113,7 @@ The following HTTP status codes might be returned by the service.
     POST /v2/scan
     POST /v2/scan-chunked
 
+    200 (ok) if virus check completes and no virus found 
     400 (bad request) if none, or more than one file is spefified
     401 (not authoirised) if you don't specify credentials or credentials invalid
     413 (too large) if the content sent is too large (default is 1Gb)
