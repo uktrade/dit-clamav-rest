@@ -71,16 +71,18 @@ Check [Authentication](###Authentication) for `username` and `password` details
 
 returns
 
+```
     200 when virus definitions are up to date
     
     401 if you didn't send credentials or credentials invalid
 
     413 if the content sent is too large (default is 1Gb).
     
-    502 when definitions are out of date
-        response contains the versions
+    500 when definitions are out of date - check the HTTP response text for further details
+        
+        
+``` 
     
-    500 unexpected server errors
 
 
 Current clamav virus version is found using the following
