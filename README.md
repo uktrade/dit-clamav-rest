@@ -98,7 +98,7 @@ In the client-examples folder you will find a number of examples files you can
 use to try out the service.
 
 ## HTTP Status Codes
-The following HTTP status codes might be returned by the service.
+Here are the main HTTP status codes that are returned by the service.
 
     GET /check
 
