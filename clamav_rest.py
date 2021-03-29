@@ -7,11 +7,12 @@ import uuid
 from flask import Flask, request, g, jsonify
 from flask_httpauth import HTTPBasicAuth
 
-from clamav_versions import get_remote_version_number, get_local_version_number
-
 import clamd
 from passlib.hash import pbkdf2_sha256 as hash
 from raven.contrib.flask import Sentry
+
+import clamav_versions as versions
+from version import __version__
 
 logging.basicConfig(stream=sys.stdout, level=logging.DEBUG)
 
@@ -65,25 +66,141 @@ def verify_pw(username, password):
 @app.route("/", methods=["GET"])
 @app.route("/check", methods=["GET"])
 def healthcheck():
+    """Healthcheck.
+
+    Get service health by pinging clamd daemon.
+
+    :returns: Status string and message. 200 if daemon responds correctly,
+      503 (service unavailable) otherwise.
+    """
     try:
         clamd_response = cd.ping()
         if clamd_response == "PONG":
-            return "Service OK"
-        logger.error("expected PONG from clamd container")
-        return "Service Down", 502
-    except clamd.ConnectionError:
-        logger.error("clamd.ConnectionError")
-        return "Service Unavailable", 502
-    except BaseException as e:
+            return "Service OK", 200
+        logger.error(f"clamd responded abnormally, expected 'PONG'"
+                     f" got '{clamd_response}'")
+    except clamd.ConnectionError as e:
+        logger.error(f"clamd.ConnectionError: {e}")
+    except Exception as e:
+        logger.error(f"Failed to ping clamd: {e}")
+    return "Service Unavailable", 503
+
+
+@app.route("/check_version", methods=["GET"])
+def version():
+    """Version.
+
+    Get service version information, including this service's version and
+    local/remote clam versions.
+
+    :returns: Json response and status. 200 if version info acquired, 500 otherwise.
+      Additionally elicits 500 if there is a local/remote clamd version mismatch.
+    """
+    status = 200
+    response = {"service": __version__}
+    try:
+        local_version = versions.get_local_version_number(cd)
+        remote_version = versions.get_remote_version_number(app.config["CLAMAV_TXT_URI"])
+    except versions.VersionError as e:
         logger.error(e)
-        return "Service Unavailable", 500
+        response["error"] = f"{e}"
+        status = 500
+    else:
+        response["clamd-actual"] = local_version
+        response["clamd-required"] = remote_version
+        response["outdated"] = False
+        if remote_version != local_version:
+            logger.warning(f"clamd outdated - current:{local_version} "
+                           f"latest: {remote_version}")
+            response["outdated"] = True
+            status = 500
+    return jsonify(response), status
 
 
+@app.route("/v2/scan", methods=["POST"])
+@auth.login_required
+def scan_v2():
+    """AV file scan endpoint.
+
+    :returns: Json response of AV scan result. 400 (Bad request) returned if
+      not exactly one file provided.
+    """
+    if len(request.files) != 1:  # noqa
+        return "Provide a single file", 400
+    _, file_data = list(request.files.items())[0]
+    logger.info(f"Starting scan for {g.current_user} of {file_data.filename}")
+    start_time = timeit.default_timer()
+    try:
+        resp = cd.instream(file_data)
+        status, reason = resp["stream"]
+    except Exception as e:
+        msg = f"Exception thrown whilst processing file: '{e}'"
+        logger.error(msg)
+        return msg, 500
+    else:
+        elapsed = timeit.default_timer() - start_time
+        response = {
+            "malware": False if status == "OK" else True,
+            "reason": reason,
+            "time": elapsed,
+        }
+        logger.info(
+            f"Scan v2 for {g.current_user} of {file_data.filename} complete. "
+            f"Took: {elapsed}. Malware found?: {response['malware']}"
+        )
+        return jsonify(response)
+
+
+@app.route("/v2/scan-chunked", methods=["POST"])
+@auth.login_required
+def scan_chunks():
+    """Chunked AV file scan endpoint.
+
+    :returns: Json response of AV scan result. 500 (Server Error) returned if
+      exception raised while processing chunks.
+    """
+    file_name = uuid.uuid4()
+    start_time = timeit.default_timer()
+    try:
+        resp = cd.instream(request.stream)
+        status, reason = resp["stream"]
+    except Exception as e:
+        msg = f"Exception thrown whilst processing file chunks: '{e}'"
+        logger.error(msg)
+        return msg, 500
+    else:
+        elapsed = timeit.default_timer() - start_time
+        response = {
+            "malware": False if status == "OK" else True,
+            "reason": reason,
+            "time": elapsed,
+        }
+        logger.info(
+            f"Scan chunk v2 for {g.current_user} of {file_name} complete. "
+            f"Took: {elapsed}. Malware found?: {response['malware']}"
+        )
+        return jsonify(response)
+
+
+@app.errorhandler(413)
+def request_entity_too_large(error):
+    """Handle 413 Request Entity Too Large.
+
+    Rather than just chop the connection, return a 413.
+    """
+    logger.warning(f"{error}")
+    return "File Too Large", 413
+
+
+#
+# DEPRECATED ROUTES
+#
 @app.route("/check_warning", methods=["GET"])
 def health_definitions():
+    logger.warning(f"Deprecated endpoint '/check_warning' invoked, use '/check_version' instead")
     try:
-        local_version = get_local_version_number(cd)
-        remote_version = get_remote_version_number(app.config["CLAMAV_TXT_URI"])
+        local_version = versions.get_local_version_number(cd)
+        remote_version = versions.get_remote_version_number(app.config["CLAMAV_TXT_URI"])
         version_msg = f"local_version: {local_version} remote_version: {remote_version}"
         logger.info(version_msg)
         if remote_version == local_version:
@@ -100,6 +217,8 @@ def health_definitions():
 @app.route("/scan", methods=["POST"])
 @auth.login_required
 def scan():
+    logger.warning(f"Deprecated endpoint '/scan' invoked by user '{g.current_user}'"
+                   f" use '/v2/scan' or '/v2/scan-chunked' instead")
     if len(request.files) != 1:  # noqa
         return "Provide a single file", 400
     _, file_data = list(request.files.items())[0]
@@ -113,69 +232,6 @@ def scan():
         f"Took: {elapsed}. Status: {status}"
     )
     return status
-
-
-@app.route("/v2/scan", methods=["POST"])
-@auth.login_required
-def scan_v2():
-    if len(request.files) != 1:  # noqa
-        return "Provide a single file", 400
-    _, file_data = list(request.files.items())[0]
-    logger.info(f"Starting scan for {g.current_user} of {file_data.filename}")
-    start_time = timeit.default_timer()
-    resp = cd.instream(file_data)
-    elapsed = timeit.default_timer() - start_time
-    status, reason = resp["stream"]
-    response = {
-        "malware": False if status == "OK" else True,
-        "reason": reason,
-        "time": elapsed,
-    }
-    logger.info(
-        f"Scan v2 for {g.current_user} of {file_data.filename} complete. "
-        f"Took: {elapsed}. Malware found?: {response['malware']}"
-    )
-    return jsonify(response)
-
-
-@app.route("/v2/scan-chunked", methods=["POST"])
-@auth.login_required
-def scan_chunks():
-    """Chunked file scan endpoint."""
-    try:
-        file_name = uuid.uuid4()
-
-        start_time = timeit.default_timer()
-        resp = cd.instream(request.stream)
-        elapsed = timeit.default_timer() - start_time
-
-        status, reason = resp["stream"]
-
-        response = {
-            "malware": False if status == "OK" else True,
-            "reason": reason,
-            "time": elapsed,
-        }
-
-        logger.info(
-            f"Scan chunk v2 for {g.current_user} of {file_name} complete. "
-            f"Took: {elapsed}. Malware found?: {response['malware']}"
-        )
-
-        return jsonify(response)
-    except Exception as e:
-        logger.error(f"Exception thrown whilst processing file chunks, ex: '{e}'")
-        return "Exception thrown whilst processing file chunks", 500
-
-
-@app.errorhandler(413)
-def request_entity_too_large(error):
-    """Handle 413 Request Entity Too Large.
-
-    Rather than just chop the connection, return a 413.
-    """
-    logger.warning(f"{error}")
-    return "File Too Large", 413
 
 
 if __name__ == "__main__":
