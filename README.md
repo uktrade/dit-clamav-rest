@@ -27,6 +27,12 @@ trying examples below.
 > of 600Mb which takes precedence over `MAX_CONTENT_LENGTH` env var if
 > specified (and `config.DEFAULT_MAX_CONTENT_LENGTH` if not).
 
+The usage examples below allow show you how to `curl` the service listening on
+`localhost:80` (the nginx proxy set up in `docker-compose.yml`).
+[Refer to this section](#using-a-local-instance-with-another-docker-compose-project)
+if you want to interact with the service from another locally running docker-compose
+project.
+
 ## Service health
 The following URIs (using a docker compose setup with NGINX proxy listening on
 port 80) do not require authentication and perform a basic service health
@@ -57,7 +63,7 @@ the local `clamd` version what the latest remote version is. If the local
     Content-Type: application/json
     Content-Length: 104
     Connection: keep-alive
-    
+
     {
       "clamd-actual": "25480",
       "clamd-required": "26120",
@@ -75,9 +81,9 @@ Where `26120` is the latest version in the above example.
 
 ## Scan an example file with user credentials
 
-Here we post a fake 'infected' file called eicar.txt:
+Basic usage posting a fake 'infected' file called eicar.txt:
 
-    # curl -iF "file=@client-examples/eicar.txt" localhost/v2/scan --user "app1:letmein"
+    # curl -iF "file=@client-examples/eicar.txt" http://app1:letmein@localhost/v2/scan
 
     HTTP/1.1 200 OK
     Server: nginx/1.18.0
@@ -85,11 +91,34 @@ Here we post a fake 'infected' file called eicar.txt:
     Content-Type: application/json
     Content-Length: 93
     Connection: keep-alive
-    
+
     {
       "malware": true,
       "reason": "Eicar-Test-Signature",
       "time": 0.0032407999970018864
+    }
+
+A preferable usage scenario is to use the `scan-chunked` endpoint. This
+requires a slightly more complicated curl request with additional headers
+`Transfer-Encoding` and `Content-Type`. Additionally, --data-binary
+ensures the file content is transmitted un-tampered:
+
+    # curl -i http://app1:letmein@localhost/v2/scan-chunked \
+      --header 'Content-Type: application/octet-stream' \
+      --header 'Transfer-Encoding: chunked' \
+      --data-binary '@client-examples/eicar.txt'
+
+    HTTP/1.1 200 OK
+    Server: nginx/1.20.1
+    Date: Wed, 28 Jul 2021 15:00:11 GMT
+    Content-Type: application/json
+    Content-Length: 93
+    Connection: keep-alive
+
+    {
+    "malware": true,
+    "reason": "Eicar-Test-Signature",
+    "time": 0.0038000690001354087
     }
 
 ## Running other client examples
@@ -147,3 +176,80 @@ Pre-requisites
 ### Run the REST api
 
     APP_CONFIG=config.LocalConfig python clamav_rest.py
+
+### Using a local instance with another docker-compose project
+
+You may want to interact with this service from a client in another locally
+running compose project.
+
+#### In the other project:
+In the other project's `docker-compose.yml` identify the services you want
+to integrate with ClamAV and (if not already specified) add a proxy network
+e.g. `proxynet`. At the bottom of the compose file (if not already specified)
+add an external network e.g. `other_project_network`. When the
+`other_project` services start, they will join the network called
+`other_project_network` (if it doesn't exist, it will be created). For example:
+
+    version: "3"
+    services:
+      client_of_clam:
+        ...
+        networks:
+          - proxynet
+
+    ...
+    networks:
+      proxynet:
+        name: other_project_network
+
+#### In this project:
+Append the following to the bottom of this project's `docker-compose.yml`:
+
+    networks:
+      default:
+        external: true
+        name: other_project_network
+
+Make sure both projects have been restarted with the new configurations.
+You can establish your configuration has worked in the following ways:
+
+#### Use docker network inspect:
+
+    # docker network inspect other_project_network
+
+    [
+        {
+            "Name": "other_project_network",
+            "Id": "1612f2...be91d6424eab420a",
+            ...
+            "Containers": {
+                "db897938...79a11f6c": {
+                    "Name": "client_of_clam_1",
+                    ...
+                },
+                "f355238d...0d69c6af": {
+                    "Name": "dit-clamav-rest_clamd_1",
+                    ...
+                },
+                ...
+   ]
+
+Here you can see that the `dit-clamav-rest_clamd_1` service is on the
+`other_project_network` along with `client_of_clam_1`.
+
+#### Use ping:
+
+Additionally, hop onto the container in _the other project_ and ping the
+ClamAV proxy:
+
+    # docker-compose exec client_of_clam bash
+
+    root@2f1e42ea7911:/app# ping nginx
+
+    PING nginx (172.24.0.14) 56(84) bytes of data.
+    64 bytes from dit-clamav-rest_nginx_1.other_project_network (172.24.0.14):...
+    64 bytes from dit-clamav-rest_nginx_1.other_project_network (172.24.0.14):...
+    64 bytes from dit-clamav-rest_nginx_1.other_project_network (172.24.0.14):...
+
+Here you can see that the `nginx` service is responding to the
+`client_of_clam` service over ICMP.
