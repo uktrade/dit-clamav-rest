@@ -101,12 +101,43 @@ Set to `true` to surface `requests` package logging in the logged output.
 Verbose, but useful for debugging tests.
 
 ## Locust settings
-To Important `locust` settings are:
+Important `locust` settings are:
 
 ### `LOCUST_HOST`
 type:`str` default: `http://localhost`
 
 command line: `-H <hostname>`, `--host <hostname>`
+
+Host to load test in the following format: `http://the.host.domain.or.ip`
+
+### `LOCUST_LOCUSTFILE`
+type:`path`
+
+command line: `-f <path>`, `--locustfile <path>`
+
+Path to test file.
+
+### `LOCUST_USERS`
+type:`int` default: `1`
+
+command line: `-u <count>`, `--user <count>`
+
+Peak number of concurrent Locust users to spawn.
+
+### `LOCUST_SPAWN_RATE`
+type:`int` default: `1`
+
+command line: `-r <rate>`, `--user <rate>`
+
+Rate in users per second to spawn users at.
+
+### `LOCUST_RUN_TIME`
+type:`str` default: _run forever_
+
+command line: `-t <period-string>`, `--run-time <period-string>`
+
+Run tests for a specified amount of time. Accepts human-readable strings like 
+`300s`, `20m`, `3h`, `1h30m` etc.
 
 ## Headless execution
 Ideally the performance tests should be executed in CI, perhaps as a pre-release
@@ -120,10 +151,6 @@ Given valid [test settings](#test-settings) (in particular `PERF_USER` and
 ```commandline
 locust -f perf/locust.py --headless -u 100 -r 10 --run-time 1h30m --stop-timeout 60
 ```
-
-- `-f` our locust file
-- `-u` number of users to spawn
-- `-r` number of users to start per second
 
 Refer to the [locust documentation](https://docs.locust.io/en/stable/running-without-web-ui.html)
 for details on headless execution.
