@@ -81,18 +81,17 @@ overall number of failures have deteriorated/are acceptable.
 type:`int` default: `3`
 
 In its response to the `/check_version` request, the `dit-clamav-rest` service
-specifies the actual and required clam version. The `check_version` task
+specifies the actual and required clam versions. The `check_version` task
 examines the reported versions. Use this setting to specify the version lag
 threshold at which the reported version should be considered a failure.
 
-While this test sounds "not very performance related" it is an important
-validation of the service, due to the way it's deployed. At start up the
-service will likely have an old `cvd` database that's baked into the 
-container image at build time. `freshclam` will refresh the on-container
-database but this takes a while from a cold start. This manifests itself as
-a flurry of initial failures which then fade when the `cvd` is updated. This 
-test helps ascertain that service instances can acceptably stabilise thier
-virus definition databases.
+> NB: This is an important validation of the service, due to the way it's
+> deployed. At start up, the service will likely have an old `cvd` database
+> that's baked into the container image at build time. `freshclam` refreshes
+> the on-container database but this takes a while from a cold start. This
+> can manifest itself as a batch of initial failures which then resolve when
+> the `cvd` is updated. This test helps ascertain that service instances can
+> acceptably stabilise their virus definition databases.
 
 ### `REQUESTS_LOGGING`
 type:`boolean` default: `false`
