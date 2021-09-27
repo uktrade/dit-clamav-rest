@@ -125,18 +125,13 @@ class ClamPostUser(HttpUser):
         """Parse HTTP response data.
 
         :param (HttpResponse) response: Response to parse.
-        :returns (dict): parsed json data or None if decode failed.
+        :returns (dict): parsed json data or None if parsing failed.
         """
-        response_data = b''
-        for chunk in response.iter_content(chunk_size=None):
-            response_data += chunk
         try:
-            data = json.loads(response_data)
-        except json.JSONDecodeError as e:
+            return response.json()
+        except (ValueError, json.JSONDecodeError) as e:
             logger.error(f"Could not decode response: {e}")
             return None
-        else:
-            return data
 
     @staticmethod
     def check_data(data, threshold=CLAMD_RESPONSE_THRESHOLD):
