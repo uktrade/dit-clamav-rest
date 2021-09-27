@@ -10,3 +10,4 @@ dnspython==2.1.0
 # required for tests
 requests==2.25.1
 Flask-Testing==0.8.1
+locust

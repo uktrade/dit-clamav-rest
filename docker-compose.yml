@@ -18,4 +18,4 @@ services:
     environment:
       - APP_CONFIG=config.TestConfig
   clamd:
-    image: ukti/docker-clamav:latest
+    image: gcr.io/sre-docker-registry/github.com/uktrade/docker-clamav:master
