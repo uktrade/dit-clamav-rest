@@ -1,5 +1,6 @@
 import os
 import logging
+import ecs_logging
 import sys
 import timeit
 import uuid
@@ -14,9 +15,12 @@ from raven.contrib.flask import Sentry
 import clamav_versions as versions
 from version import __version__
 
-logging.basicConfig(stream=sys.stdout, level=logging.DEBUG)
-
 logger = logging.getLogger("CLAMAV-REST")
+
+logger.setLevel(logging.DEBUG)
+handler = logging.StreamHandler()
+handler.setFormatter(ecs_logging.StdlibFormatter())
+logger.addHandler(handler)
 
 app = Flask("CLAMAV-REST")
 app.config.from_object(os.environ["APP_CONFIG"])
