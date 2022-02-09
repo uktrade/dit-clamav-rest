@@ -1,6 +1,7 @@
 import os
 import logging
 import ecs_logging
+from datetime import datetime 
 import sys
 import timeit
 import uuid
@@ -194,6 +195,24 @@ def request_entity_too_large(error):
     """
     logger.warning(f"{error}")
     return "File Too Large", 413
+
+@app.after_request
+def after_request(response):
+    """ Logging after every request. """
+    logger.info(
+        "%s [%s] %s %s %s %s %s %s %s %s",
+        request.remote_addr,
+        datetime.utcnow().strftime("%d/%b/%Y:%H:%M:%S.%f")[:-3],
+        request.method,
+        request.path,
+        request.scheme,
+        response.status,
+        response.content_length,
+        request.referrer,
+        request.user_agent,
+        request.headers,
+    )
+    return response
 
 
 #
