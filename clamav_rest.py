@@ -199,8 +199,13 @@ def request_entity_too_large(error):
 @app.after_request
 def after_request(response):
     """ Logging after every request. """
+    extra_labels = {}
+    zipkin_headers = ("X-B3-Traceid", "X-B3-Spanid")
+    for header in request.headers:
+        if header[0] in zipkin_headers:
+            extra_labels[header[0]] = header[1]
     logger.info(
-        "%s [%s] %s %s %s %s %s %s %s %s",
+        "%s [%s] %s %s %s %s %s %s %s",
         request.remote_addr,
         datetime.utcnow().strftime("%d/%b/%Y:%H:%M:%S.%f")[:-3],
         request.method,
@@ -210,7 +215,7 @@ def after_request(response):
         response.content_length,
         request.referrer,
         request.user_agent,
-        request.headers,
+        extra=extra_labels
     )
     return response
 
