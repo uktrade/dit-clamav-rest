@@ -1,7 +1,6 @@
 import os
 import logging
 import ecs_logging
-from datetime import datetime 
 import sys
 import timeit
 import uuid
@@ -199,23 +198,38 @@ def request_entity_too_large(error):
 @app.after_request
 def after_request(response):
     """ Logging after every request. """
-    extra_labels = {}
     zipkin_headers = ("X-B3-Traceid", "X-B3-Spanid")
+    extra_labels = {"X-B3-Traceid": "none", "X-B3-Spanid": "none"}
     for header in request.headers:
         if header[0] in zipkin_headers:
             extra_labels[header[0]] = header[1]
+    labels={
+        "http.request.method": request.method,
+        "http.request.bytes":request.content_length,
+        "http.request.body.content": request.data,
+        "http.request.body.bytes": len(request.data),
+        "http.request.mime_type": request.mimetype,
+        "http.request.referrer": request.referrer,
+        "http.response.status_code": response.status_code,
+        "http.response.bytes": response.content_length,
+        "http.response.body.content": response.data,
+        "http.response.body.bytes": len(response.data),
+        "http.response.mime_type": response.mimetype,
+        "http.version": request.environ.get('SERVER_PROTOCOL'),
+        "source.ip": request.remote_addr,
+        "url.path": request.path,
+        "url.original":request.url,
+        "url.domain": request.host,
+        "url.scheme": request.scheme,
+        "user_agent.original": request.user_agent,
+        "trace.id": extra_labels["X-B3-Traceid"],
+        "span.id": extra_labels["X-B3-Spanid"]
+    }
     logger.info(
-        "%s [%s] %s %s %s %s %s %s %s",
-        request.remote_addr,
-        datetime.utcnow().strftime("%d/%b/%Y:%H:%M:%S.%f")[:-3],
-        request.method,
-        request.path,
-        request.scheme,
-        response.status,
-        response.content_length,
-        request.referrer,
-        request.user_agent,
-        extra=extra_labels
+        "%s %s",
+        __name__,
+        request.endpoint,
+        extra={**labels,**extra_labels}
     )
     return response
 
