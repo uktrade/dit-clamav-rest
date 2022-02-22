@@ -4,7 +4,8 @@ jobs:
     docker:
       - image: circleci/python:3.9.0
       - image: gcr.io/sre-docker-registry/github.com/uktrade/docker-clamav:master
-
+        environment:
+          MIRROR_URL: db.local.clamav.net
     steps:
       - checkout
 
