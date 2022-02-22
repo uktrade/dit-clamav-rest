@@ -21,9 +21,9 @@ jobs:
             pip install -r requirements.txt
 
       - run:
-          name: Wait for clamav container
+          name: Wait 60 seconds for clamav container
           command: |
-            for i in `seq 1 30`;
+            for i in `seq 1 60`;
             do
               nc -z localhost 3310 && echo Success && exit 0
               echo -n .
