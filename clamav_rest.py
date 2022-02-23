@@ -195,6 +195,7 @@ def request_entity_too_large(error):
     logger.warning(f"{error}")
     return "File Too Large", 413
 
+
 @app.after_request
 def after_request(response):
     """ Logging after every request. """
