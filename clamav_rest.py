@@ -218,6 +218,14 @@ def after_request(response):
             "http.request.body.content": None,
             "http.request.body.bytes": 0
         }
+    try:
+        labels={**labels,
+            "http.version": request.environ.get('SERVER_PROTOCOL')
+        }
+    except:
+        labels={**labels,
+            "http.version": None,
+        }
     labels={**labels,
         "http.request.method": getattr(request, 'method', None),
         "http.request.bytes": getattr(request, 'content_length', None),
