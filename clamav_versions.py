@@ -7,7 +7,6 @@ import logging
 import sys
 
 logger = logging.getLogger("CLAMAV-REST.VERSIONS_SERVICE")
-logging.basicConfig(stream=sys.stdout, level=logging.DEBUG)
 
 
 class VersionError(Exception):
