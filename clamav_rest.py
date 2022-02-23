@@ -215,26 +215,33 @@ def after_request(response):
         }
     except:
         labels={**labels,
-            "http.request.body.content": "none",
+            "http.request.body.content": None,
             "http.request.body.bytes": 0
         }
+    try:
     labels={**labels,
-        "http.request.method": request.method,
-        "http.request.bytes":request.content_length,
-        "http.request.mime_type": request.mimetype,
-        "http.request.referrer": request.referrer,
-        "http.response.status_code": response.status_code,
-        "http.response.bytes": response.content_length,
-        "http.response.body.content": response.data,
-        "http.response.body.bytes": len(response.data),
-        "http.response.mime_type": response.mimetype,
-        "http.version": request.environ.get('SERVER_PROTOCOL'),
-        "source.ip": request.remote_addr,
-        "url.path": request.path,
-        "url.original":request.url,
-        "url.domain": request.host,
-        "url.scheme": request.scheme,
-        "user_agent.original": request.user_agent
+            "http.version": request.environ.get('SERVER_PROTOCOL')
+        }
+    except:
+        labels={**labels,
+            "http.version": None,
+        }
+    labels={**labels,
+        "http.request.method": getattr(request, 'method', None),
+        "http.request.bytes": getattr(request, 'content_length', None),
+        "http.request.mime_type": getattr(request, 'mimetype', None),
+        "http.request.referrer": getattr(request, 'referrer', None),
+        "http.response.status_code": getattr(response, 'status_code', None),
+        "http.response.bytes": getattr(response, 'content_length', None),
+        "http.response.body.content": getattr(response, 'data', None),
+        "http.response.body.bytes": len(getattr(response, 'data', None)),
+        "http.response.mime_type": getattr(response, 'mimetype', None),
+        "source.ip": getattr(request, 'remote_addr', None),
+        "url.path": getattr(request, 'path', None),
+        "url.original": getattr(request, 'url', None),
+        "url.domain": getattr(request, 'host', None),
+        "url.scheme": getattr(request, 'scheme', None),
+        "user_agent.original": getattr(request, 'user_agent', None)
     }
     logger.info(
         "%s %s",
