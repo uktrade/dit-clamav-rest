@@ -204,10 +204,22 @@ def after_request(response):
         if header[0] in zipkin_headers:
             extra_labels[header[0]] = header[1]
     labels={
+        "trace.id": extra_labels["X-B3-Traceid"],
+        "span.id": extra_labels["X-B3-Spanid"]
+    }
+    try:
+        labels={**labels,
+            "http.request.body.content": request.data,
+            "http.request.body.bytes": len(request.data)
+        }
+    except:
+        labels={**labels,
+            "http.request.body.content": "none",
+            "http.request.body.bytes": 0
+        }
+    labels={**labels,
         "http.request.method": request.method,
         "http.request.bytes":request.content_length,
-        "http.request.body.content": request.data,
-        "http.request.body.bytes": len(request.data),
         "http.request.mime_type": request.mimetype,
         "http.request.referrer": request.referrer,
         "http.response.status_code": response.status_code,
@@ -221,9 +233,7 @@ def after_request(response):
         "url.original":request.url,
         "url.domain": request.host,
         "url.scheme": request.scheme,
-        "user_agent.original": request.user_agent,
-        "trace.id": extra_labels["X-B3-Traceid"],
-        "span.id": extra_labels["X-B3-Spanid"]
+        "user_agent.original": request.user_agent
     }
     logger.info(
         "%s %s",
