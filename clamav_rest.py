@@ -208,23 +208,15 @@ def request_entity_too_large(error):
 @app.after_request
 def after_request(response):
     """ Logging after every request. """
-    zipkin_headers = ("X-B3-Traceid", "X-B3-Spanid")
-    labels = {"X-B3-Traceid": "none", "X-B3-Spanid": "none"}
-    for header in request.headers:
-        if header[0] in zipkin_headers:
-            labels[header[0]] = header[1]
+    labels = {}
+
+    # Store the zipkin headers in the same fields as django-log-formatter-ecs
+    labels["X-B3-Traceid"] = request.headers.get("X-B3-Traceid", "none")
+    labels["X-B3-Spanid"] = request.headers.get("X-B3-Spanid", "none")
+    # Also store zipkin headers in the standard ECS fields
     labels["trace.id"] = labels["X-B3-Traceid"]
     labels["span.id"] = labels["X-B3-Spanid"]
-    try:
-        labels={**labels,
-            "http.request.body.content": request.data,
-            "http.request.body.bytes": len(request.data)
-        }
-    except:
-        labels={**labels,
-            "http.request.body.content": None,
-            "http.request.body.bytes": 0
-        }
+
     labels["http.request.method"] = getattr(request, 'method', None)
     labels["http.request.bytes"] = getattr(request, 'content_length', None)
     labels["http.request.mime_type"] = getattr(request, 'mimetype', None)
@@ -242,6 +234,11 @@ def after_request(response):
     labels["url.scheme"] = getattr(request, 'scheme', None)
     labels["user_agent.original"] = getattr(request, 'user_agent', None)
     
+    # Don't try to read request.data when request entity is too large
+    if labels["http.response.status_code"] != 413:
+        labels["http.request.body.content"] = getattr(request, 'data', None)
+        labels["http.request.body.bytes"] = len(getattr(request, 'data', ""))
+
     logger.info(
         "%s %s",
         __name__,
