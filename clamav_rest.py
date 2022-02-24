@@ -16,11 +16,20 @@ import clamav_versions as versions
 from version import __version__
 
 logger = logging.getLogger("CLAMAV-REST")
-
 logger.setLevel(logging.DEBUG)
-handler = logging.StreamHandler(stream=sys.stdout)
-handler.setFormatter(ecs_logging.StdlibFormatter())
-logger.addHandler(handler)
+
+# Warnings and above log to the stderr stream
+stderr_handler = logging.StreamHandler(stream=sys.stderr)
+stderr_handler.setLevel(logging.WARNING)
+stderr_handler.setFormatter(ecs_logging.StdlibFormatter())
+logger.addHandler(stderr_handler)
+
+# Events below Warning log to the stdout stream
+stdout_handler = logging.StreamHandler(stream=sys.stdout)
+stdout_handler.setLevel(logging.DEBUG)
+stdout_handler.addFilter(lambda record: record.levelno < logging.WARNING)
+stdout_handler.setFormatter(ecs_logging.StdlibFormatter())
+logger.addHandler(stdout_handler)
 
 app = Flask("CLAMAV-REST")
 app.config.from_object(os.environ["APP_CONFIG"])
