@@ -18,7 +18,7 @@ from version import __version__
 logger = logging.getLogger("CLAMAV-REST")
 
 logger.setLevel(logging.DEBUG)
-handler = logging.StreamHandler()
+handler = logging.StreamHandler(stream=sys.stdout)
 handler.setFormatter(ecs_logging.StdlibFormatter())
 logger.addHandler(handler)
 
