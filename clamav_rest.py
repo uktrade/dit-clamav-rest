@@ -16,7 +16,7 @@ import clamav_versions as versions
 from version import __version__
 
 logger = logging.getLogger("CLAMAV-REST")
-logger.setLevel(logging.DEBUG)
+logger.setLevel(os.environ.get("LOGGING_LEVEL", logging.DEBUG))
 
 # Warnings and above log to the stderr stream
 stderr_handler = logging.StreamHandler(stream=sys.stderr)
