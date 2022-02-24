@@ -19,3 +19,6 @@ services:
       - APP_CONFIG=config.TestConfig
   clamd:
     image: gcr.io/sre-docker-registry/github.com/uktrade/docker-clamav:master
+    environment:
+      - MIRROR_URL=db.local.clamav.net
+      
