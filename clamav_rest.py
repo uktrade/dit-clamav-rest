@@ -209,14 +209,12 @@ def request_entity_too_large(error):
 def after_request(response):
     """ Logging after every request. """
     zipkin_headers = ("X-B3-Traceid", "X-B3-Spanid")
-    extra_labels = {"X-B3-Traceid": "none", "X-B3-Spanid": "none"}
+    labels = {"X-B3-Traceid": "none", "X-B3-Spanid": "none"}
     for header in request.headers:
         if header[0] in zipkin_headers:
-            extra_labels[header[0]] = header[1]
-    labels={
-        "trace.id": extra_labels["X-B3-Traceid"],
-        "span.id": extra_labels["X-B3-Spanid"]
-    }
+            labels[header[0]] = header[1]
+    labels["trace.id"] = labels["X-B3-Traceid"]
+    labels["span.id"] = labels["X-B3-Spanid"]
     try:
         labels={**labels,
             "http.request.body.content": request.data,
@@ -227,36 +225,28 @@ def after_request(response):
             "http.request.body.content": None,
             "http.request.body.bytes": 0
         }
-    try:
-        labels={**labels,
-            "http.version": request.environ.get('SERVER_PROTOCOL')
-        }
-    except:
-        labels={**labels,
-            "http.version": None,
-        }
-    labels={**labels,
-        "http.request.method": getattr(request, 'method', None),
-        "http.request.bytes": getattr(request, 'content_length', None),
-        "http.request.mime_type": getattr(request, 'mimetype', None),
-        "http.request.referrer": getattr(request, 'referrer', None),
-        "http.response.status_code": getattr(response, 'status_code', None),
-        "http.response.bytes": getattr(response, 'content_length', None),
-        "http.response.body.content": getattr(response, 'data', None),
-        "http.response.body.bytes": len(getattr(response, 'data', None)),
-        "http.response.mime_type": getattr(response, 'mimetype', None),
-        "source.ip": getattr(request, 'remote_addr', None),
-        "url.path": getattr(request, 'path', None),
-        "url.original": getattr(request, 'url', None),
-        "url.domain": getattr(request, 'host', None),
-        "url.scheme": getattr(request, 'scheme', None),
-        "user_agent.original": getattr(request, 'user_agent', None)
-    }
+    labels["http.request.method"] = getattr(request, 'method', None)
+    labels["http.request.bytes"] = getattr(request, 'content_length', None)
+    labels["http.request.mime_type"] = getattr(request, 'mimetype', None)
+    labels["http.request.referrer"] = getattr(request, 'referrer', None)
+    labels["http.response.status_code"] = getattr(response, 'status_code', None)
+    labels["http.response.bytes"] = getattr(response, 'content_length', None)
+    labels["http.response.body.content"] = getattr(response, 'data', None)
+    labels["http.response.body.bytes"] = len(getattr(response, 'data', None))
+    labels["http.response.mime_type"] = getattr(response, 'mimetype', None)
+    labels["http.version"] = request.environ.get("SERVER_PROTOCOL", None)
+    labels["source.ip"] = getattr(request, 'remote_addr', None)
+    labels["url.path"] = getattr(request, 'path', None)
+    labels["url.original"] = getattr(request, 'url', None)
+    labels["url.domain"] = getattr(request, 'host', None)
+    labels["url.scheme"] = getattr(request, 'scheme', None)
+    labels["user_agent.original"] = getattr(request, 'user_agent', None)
+    
     logger.info(
         "%s %s",
         __name__,
         request.endpoint,
-        extra={**labels,**extra_labels}
+        extra=labels
     )
     return response
 
