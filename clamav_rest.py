@@ -208,15 +208,10 @@ def request_entity_too_large(error):
 @app.after_request
 def after_request(response):
     """ Logging after every request. """
+
     labels = {}
 
-    # Store the zipkin headers in the same fields as django-log-formatter-ecs
-    labels["X-B3-Traceid"] = request.headers.get("X-B3-Traceid", "none")
-    labels["X-B3-Spanid"] = request.headers.get("X-B3-Spanid", "none")
-    # Also store zipkin headers in the standard ECS fields
-    labels["trace.id"] = labels["X-B3-Traceid"]
-    labels["span.id"] = labels["X-B3-Spanid"]
-
+    # Store the general flask request and response values in standard ECS structure
     labels["http.request.method"] = getattr(request, 'method', None)
     labels["http.request.bytes"] = getattr(request, 'content_length', None)
     labels["http.request.mime_type"] = getattr(request, 'mimetype', None)
@@ -234,6 +229,14 @@ def after_request(response):
     labels["url.scheme"] = getattr(request, 'scheme', None)
     labels["user_agent.original"] = getattr(request, 'user_agent', None)
     
+
+    # Store the zipkin headers in the same fields as django-log-formatter-ecs
+    labels["X-B3-Traceid"] = request.headers.get("X-B3-Traceid", "none")
+    labels["X-B3-Spanid"] = request.headers.get("X-B3-Spanid", "none")
+    # Also store zipkin headers in the standard ECS fields
+    labels["trace.id"] = labels["X-B3-Traceid"]
+    labels["span.id"] = labels["X-B3-Spanid"]
+
     # Don't try to read request.data when request entity is too large
     if labels["http.response.status_code"] != 413:
         labels["http.request.body.content"] = getattr(request, 'data', None)
