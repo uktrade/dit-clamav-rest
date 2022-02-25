@@ -228,7 +228,6 @@ def after_request(response):
     labels["url.domain"] = getattr(request, 'host', None)
     labels["url.scheme"] = getattr(request, 'scheme', None)
     labels["user_agent.original"] = getattr(request, 'user_agent', None)
-    
 
     # Store the zipkin headers in the same fields as django-log-formatter-ecs
     labels["X-B3-Traceid"] = request.headers.get("X-B3-Traceid", "none")
