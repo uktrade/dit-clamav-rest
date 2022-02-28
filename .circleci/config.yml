@@ -3,8 +3,9 @@ jobs:
   build:
     docker:
       - image: circleci/python:3.9.0
-      - image: ukti/docker-clamav:latest
-
+      - image: gcr.io/sre-docker-registry/github.com/uktrade/docker-clamav:master
+        environment:
+          MIRROR_URL: db.local.clamav.net
     steps:
       - checkout
 
@@ -20,9 +21,9 @@ jobs:
             pip install -r requirements.txt
 
       - run:
-          name: Wait for clamav container
+          name: Wait up to 120 seconds for clamav container to start
           command: |
-            for i in `seq 1 30`;
+            for i in `seq 1 120`;
             do
               nc -z localhost 3310 && echo Success && exit 0
               echo -n .

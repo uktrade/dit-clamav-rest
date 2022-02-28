@@ -33,6 +33,14 @@ The usage examples below allow show you how to `curl` the service listening on
 if you want to interact with the service from another locally running docker-compose
 project.
 
+### Environment Variable: MIRROR_URL
+Note that the [clamav docker container](https://github.com/uktrade/docker-clamav) used by this service requires that the env var [MIRROR_URL](https://github.com/uktrade/docker-clamav/blob/a940abae307d1feb3322462e6e229a96fae257a3/debian/buster/custom-bootstrap.sh#L12) is set, otherwise the following error occurs in the `clamd` service:
+```
+ERROR: Missing argument for option at /etc/clamav/freshclam.conf
+ERROR: Can't open/parse the config file /etc/clamav/freshclam.conf
+```
+If using this container, ensure the `MIRROR_URL` env var is set in the docker-compose file.
+
 ## Service health
 The following URIs (using a docker compose setup with NGINX proxy listening on
 port 80) do not require authentication and perform a basic service health

@@ -1,5 +1,6 @@
 import os
 import logging
+import ecs_logging
 import sys
 import timeit
 import uuid
@@ -14,9 +15,21 @@ from raven.contrib.flask import Sentry
 import clamav_versions as versions
 from version import __version__
 
-logging.basicConfig(stream=sys.stdout, level=logging.DEBUG)
-
 logger = logging.getLogger("CLAMAV-REST")
+logger.setLevel(os.environ.get("LOGGING_LEVEL", logging.DEBUG))
+
+# Warnings and above log to the stderr stream
+stderr_handler = logging.StreamHandler(stream=sys.stderr)
+stderr_handler.setLevel(logging.WARNING)
+stderr_handler.setFormatter(ecs_logging.StdlibFormatter())
+logger.addHandler(stderr_handler)
+
+# Events below Warning log to the stdout stream
+stdout_handler = logging.StreamHandler(stream=sys.stdout)
+stdout_handler.setLevel(logging.DEBUG)
+stdout_handler.addFilter(lambda record: record.levelno < logging.WARNING)
+stdout_handler.setFormatter(ecs_logging.StdlibFormatter())
+logger.addHandler(stdout_handler)
 
 app = Flask("CLAMAV-REST")
 app.config.from_object(os.environ["APP_CONFIG"])
@@ -190,6 +203,51 @@ def request_entity_too_large(error):
     """
     logger.warning(f"{error}")
     return "File Too Large", 413
+
+
+@app.after_request
+def after_request(response):
+    """ Logging after every request. """
+
+    labels = {}
+
+    # Store the general flask request and response values in standard ECS structure
+    labels["http.request.method"] = getattr(request, 'method', None)
+    labels["http.request.bytes"] = getattr(request, 'content_length', None)
+    labels["http.request.mime_type"] = getattr(request, 'mimetype', None)
+    labels["http.request.referrer"] = getattr(request, 'referrer', None)
+    labels["http.response.status_code"] = getattr(response, 'status_code', None)
+    labels["http.response.bytes"] = getattr(response, 'content_length', None)
+    labels["http.response.body.content"] = getattr(response, 'data', None)
+    labels["http.response.body.bytes"] = len(getattr(response, 'data', None))
+    labels["http.response.mime_type"] = getattr(response, 'mimetype', None)
+    labels["http.version"] = request.environ.get("SERVER_PROTOCOL", None)
+    labels["source.ip"] = getattr(request, 'remote_addr', None)
+    labels["url.path"] = getattr(request, 'path', None)
+    labels["url.original"] = getattr(request, 'url', None)
+    labels["url.domain"] = getattr(request, 'host', None)
+    labels["url.scheme"] = getattr(request, 'scheme', None)
+    labels["user_agent.original"] = getattr(request, 'user_agent', None)
+
+    # Store the zipkin headers in the same fields as django-log-formatter-ecs
+    labels["X-B3-Traceid"] = request.headers.get("X-B3-Traceid", "none")
+    labels["X-B3-Spanid"] = request.headers.get("X-B3-Spanid", "none")
+    # Also store zipkin headers in the standard ECS fields
+    labels["trace.id"] = labels["X-B3-Traceid"]
+    labels["span.id"] = labels["X-B3-Spanid"]
+
+    # Don't try to read request.data when request entity is too large
+    if labels["http.response.status_code"] != 413:
+        labels["http.request.body.content"] = getattr(request, 'data', None)
+        labels["http.request.body.bytes"] = len(getattr(request, 'data', ""))
+
+    logger.info(
+        "%s %s",
+        __name__,
+        request.endpoint,
+        extra=labels
+    )
+    return response
 
 
 #
