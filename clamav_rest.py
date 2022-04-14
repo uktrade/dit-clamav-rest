@@ -300,7 +300,16 @@ def scan():
     status = "OK" if resp["stream"][0] == "OK" else "NOTOK"
     logger.info(
         f"Scan for {g.current_user} of {file_data.filename} complete. "
-        f"Took: {elapsed}. Status: {status}"
+        f"Took: {elapsed}. Status: {status}",
+        extra={
+            "labels.route": "scan", 
+            "labels.user": g.current_user, 
+            "labels.filename": file_data.filename, 
+            "labels.response": {
+                "malware": status,
+                "time": elapsed
+                }
+            }
     )
     return status
 
