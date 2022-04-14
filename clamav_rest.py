@@ -196,7 +196,14 @@ def scan_chunks():
         }
         logger.info(
             f"Scan chunk v2 for {g.current_user} of {file_name} complete. "
-            f"Took: {elapsed}. Malware found?: {response['malware']}"
+            f"Took: {elapsed}. Malware found?: {response['malware']}",
+            extra={
+                "labels.route": "v2/scan-chunked", 
+                "labels.user": g.current_user,
+                "labels.filename": file_name,
+                "labels.filenames": dict(request.files.items()),
+                "labels.response": response
+                }
         )
         return jsonify(response)
 
