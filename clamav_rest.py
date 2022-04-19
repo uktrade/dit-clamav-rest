@@ -159,7 +159,13 @@ def scan_v2():
         }
         logger.info(
             f"Scan v2 for {g.current_user} of {file_data.filename} complete. "
-            f"Took: {elapsed}. Malware found?: {response['malware']}"
+            f"Took: {elapsed}. Malware found?: {response['malware']}",
+            extra={
+                "labels.route": "v2/scan", 
+                "labels.user": g.current_user, 
+                "labels.filename": file_data.filename, 
+                "labels.response": response
+                }
         )
         return jsonify(response)
 
@@ -190,7 +196,14 @@ def scan_chunks():
         }
         logger.info(
             f"Scan chunk v2 for {g.current_user} of {file_name} complete. "
-            f"Took: {elapsed}. Malware found?: {response['malware']}"
+            f"Took: {elapsed}. Malware found?: {response['malware']}",
+            extra={
+                "labels.route": "v2/scan-chunked", 
+                "labels.user": g.current_user,
+                "labels.filename": file_name,
+                "labels.filenames": dict(request.files.items()),
+                "labels.response": response
+                }
         )
         return jsonify(response)
 
@@ -287,7 +300,16 @@ def scan():
     status = "OK" if resp["stream"][0] == "OK" else "NOTOK"
     logger.info(
         f"Scan for {g.current_user} of {file_data.filename} complete. "
-        f"Took: {elapsed}. Status: {status}"
+        f"Took: {elapsed}. Status: {status}",
+        extra={
+            "labels.route": "scan", 
+            "labels.user": g.current_user, 
+            "labels.filename": file_data.filename, 
+            "labels.response": {
+                "malware": status,
+                "time": elapsed
+                }
+            }
     )
     return status
 
