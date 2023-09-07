@@ -8,8 +8,8 @@ Ce dépôt est basé sur
 
 ## TODO
 
-- [] Traduire la documentation
-- [] Tests de charge
+- [ ] Traduire la documentation
+- [ ] Tests de charge
 
 ## Différences avec DIT ClamAV REST
 
