@@ -1,7 +1,4 @@
 repository: dit-clamav-rest
 builder:
-  name: paketobuildpacks/builder-jammy-base
-  version: 0.4.240
-packages:
-  - libpq-dev
-  - libsqlite3-dev
+  name: paketobuildpacks/builder-jammy-full
+  version: 0.3.338
