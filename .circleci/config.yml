@@ -7,11 +7,6 @@ jobs:
         environment:
           MIRROR_URL: db.local.clamav.net
     steps:
-      - run:
-          name: create virtual env
-          command: |
-            python -m venv venv
-
       - restore_cache:
           keys:
             - pip-dependencies-v2-{{ checksum "requirements.txt" }}
