@@ -42,3 +42,4 @@ class TestConfig(BaseConfig):
     APPLICATION_USERS = "app1::$pbkdf2-sha256$29000$LiWkFELo3TvHGANACAGAkA$Re51NLQNiCYy0UAdnFbNfLltFDmiJOOzqjMPFRVBgMM"  # noqa
     CLAMD_HOST = "clamd"
     MAX_CONTENT_LENGTH = 4999999  # Smidge under 5MB
+    
