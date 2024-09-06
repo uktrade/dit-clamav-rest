@@ -3,7 +3,7 @@ jobs:
   build:
     docker:
       - image: cimg/python:3.11.6
-      - image: 480224066791.dkr.ecr.eu-west-2.amazonaws.com/clamav/docker:latest
+      - image: gcr.io/sre-docker-registry/github.com/uktrade/docker-clamav:master
         environment:
           MIRROR_URL: db.local.clamav.net
     steps:
