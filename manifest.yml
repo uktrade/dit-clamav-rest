@@ -1,5 +1,6 @@
 ---
 applications:
-  - buildpacks:
-    - python_buildpack
+  - name: clamav-rest
+    buildpacks:
+      - https://github.com/cloudfoundry/python-buildpack.git
     stack: cflinuxfs4
