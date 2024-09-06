@@ -10,7 +10,7 @@ class BaseConfig(object):
     APPLICATION_USERS = os.environ.get("APPLICATION_USERS", {})
     SENTRY_DSN = os.environ.get("SENTRY_DSN", "")
     CLAMAV_TXT_URI = "current.cvd.clamav.net"
-    CLAMD_HOST = "docker-clamav"
+    CLAMD_HOST = "localhost"
     CLAMD_PORT = 3310
     HOST = "0.0.0.0"
     PORT = int(os.environ.get("PORT", "8090"))
