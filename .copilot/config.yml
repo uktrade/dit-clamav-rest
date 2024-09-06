@@ -2,3 +2,4 @@ repository: dit-clamav-rest
 builder:
   name: paketobuildpacks/builder-jammy-full
   version: 0.3.338
+
