@@ -2,13 +2,13 @@ version: 2.1
 jobs:
   build:
     docker:
-      - image: cimg/python:3.11.6
+      - image: cimg/python:3.12.5
       - image: gcr.io/sre-docker-registry/github.com/uktrade/docker-clamav:master
         environment:
           MIRROR_URL: db.local.clamav.net
     steps:
       - checkout
-
+      
       - restore_cache:
           keys:
             - pip-dependencies-v2-{{ checksum "requirements.txt" }}
@@ -53,6 +53,5 @@ jobs:
 
       - run:
           name: Run unit tests
-          command: |
-            source venv/bin/activate
+          command: |           
             APP_CONFIG=config.CircleCiConfig python -m unittest tests.py -f
