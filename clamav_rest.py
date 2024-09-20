@@ -122,7 +122,8 @@ def version():
         response["clamd-actual"] = local_version
         response["clamd-required"] = remote_version
         response["outdated"] = False
-        if remote_version != local_version:
+        # if remote_version != local_version:
+        if abs(remote_version-local_version) > 1:
             logger.warning(f"clamd outdated - current:{local_version} "
                            f"latest: {remote_version}")
             response["outdated"] = True
