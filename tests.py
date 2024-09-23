@@ -98,7 +98,7 @@ class ClamAVirusUpdate(unittest.TestCase):
         self.assertEqual(response.status_code, 500)
         self.assertEqual(response.json["clamd-actual"], "25464")
         self.assertEqual(response.json["clamd-required"], "25466")
-        self.assertEqual(response.json["outdated"], Ture)
+        self.assertEqual(response.json["outdated"], True)
         self.assertEqual(response.json["service"], __version__)
 
 
