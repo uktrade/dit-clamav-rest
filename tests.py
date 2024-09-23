@@ -231,7 +231,7 @@ class ClamAVRESTV2ScanChunkedTestCase(LiveServerTestCase):
     def setUp(self):
         self.headers = _get_auth_header("app1", "letmein")
         self.headers["Transfer-encoding"] = "chunked"
-        self.chunk_url = "http://127.0.0.1:5000/v2/scan-chunked"
+        self.chunk_url = "http://localhost:5000/v2/scan-chunked"
 
     @staticmethod
     def _eicar_gen():
