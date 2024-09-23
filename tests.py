@@ -93,12 +93,12 @@ class ClamAVirusUpdate(unittest.TestCase):
     @mock.patch("clamav_rest.versions.get_local_version_number")
     def test_services_out_of_date_v2(self, local, remote):
         remote.return_value = "25466"
-        local.return_value = "25465"
+        local.return_value = "25464"
         response = self.app.get("/check_version")
         self.assertEqual(response.status_code, 500)
-        self.assertEqual(response.json["clamd-actual"], "25465")
+        self.assertEqual(response.json["clamd-actual"], "25464")
         self.assertEqual(response.json["clamd-required"], "25466")
-        self.assertEqual(response.json["outdated"], False)
+        self.assertEqual(response.json["outdated"], Ture)
         self.assertEqual(response.json["service"], __version__)
 
 
