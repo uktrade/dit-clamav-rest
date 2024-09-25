@@ -4,7 +4,7 @@ raven==6.10.0
 passlib==1.7.4
 Flask-HTTPAuth==4.8.0
 Werkzeug>=3.0.3
-gunicorn==21.2.0
+gunicorn>=22.0.0
 blinker==1.6.3
 dnspython==2.4.2
 ecs_logging==2.1.0
