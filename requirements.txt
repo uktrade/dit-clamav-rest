@@ -6,7 +6,7 @@ Flask-HTTPAuth==4.8.0
 Werkzeug>=3.0.3
 gunicorn==21.2.0
 blinker==1.6.3
-dnspython==2.4.2
+dnspython>=2.6.1
 ecs_logging==2.1.0
 
 # required for tests
