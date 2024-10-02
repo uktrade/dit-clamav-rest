@@ -1,4 +1,4 @@
-# DIT ClamAV REST interface
+# DIT ClamAV REST interface 
 
 This is a python-based REST interface to ClamD inspired by https://github.com/solita/clamav-rest
 
@@ -261,3 +261,4 @@ ClamAV proxy:
 
 Here you can see that the `nginx` service is responding to the
 `client_of_clam` service over ICMP.
+
